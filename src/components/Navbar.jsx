@@ -58,7 +58,7 @@ export default function Navbar() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-[#08080a]/95 backdrop-blur-md border-b border-white/10 py-3 shadow-xl'
+          ? 'bg-[#08080a]/95 backdrop-blur-md border-b border-[#C49A3A]/20 py-3 shadow-xl'
           : 'bg-gradient-to-b from-black/80 via-black/40 to-transparent py-4 sm:py-5 border-none'
       }`}
     >
@@ -105,7 +105,7 @@ export default function Navbar() {
         {/* Mobile menu button */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden min-w-[44px] min-h-[44px] p-2 flex items-center justify-center rounded-md text-[#F4E7D0] hover:text-[#C96B35] hover:bg-white/5 transition-colors"
+          className="md:hidden min-w-[44px] min-h-[44px] p-2 flex items-center justify-center rounded-md text-[#F4E7D0] hover:text-[#C96B35] hover:bg-[#C96B35]/10 transition-colors"
           aria-label="Toggle Navigation Menu"
         >
           {mobileMenuOpen ? <X className="w-6 h-6 text-[#C96B35]" /> : <Menu className="w-6 h-6" />}
@@ -127,7 +127,7 @@ export default function Navbar() {
                   key={link.name}
                   href={link.href}
                   onClick={(e) => handleNavClick(e, link.href)}
-                  className="text-xs font-mono tracking-widest text-[#F4E7D0] hover:text-[#C96B35] uppercase transition-colors py-3 border-b border-white/5 flex items-center justify-between min-h-[44px]"
+                  className="text-xs font-mono tracking-widest text-[#F4E7D0] hover:text-[#C96B35] uppercase transition-colors py-3 border-b border-[#C49A3A]/15 flex items-center justify-between min-h-[44px]"
                 >
                   <span>{link.name}</span>
                   <span className="text-[#C96B35]">→</span>
@@ -137,7 +137,7 @@ export default function Navbar() {
             <Link
               to="/register"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full text-center bg-[#C96B35] active:bg-[#B65A3A] text-[#F4E7D0] py-3.5 rounded-md font-mono font-bold text-xs tracking-widest uppercase shadow-lg shadow-[#C96B35]/25 flex items-center justify-center gap-2 min-h-[44px] border border-[#C96B35]"
+              className="w-full text-center bg-[#C96B35] hover:bg-[#B65A3A] active:bg-[#B65A3A] text-[#F4E7D0] py-3.5 rounded-md font-mono font-bold text-xs tracking-widest uppercase shadow-lg shadow-[#C96B35]/25 flex items-center justify-center gap-2 min-h-[44px] border border-[#C96B35] hover:border-[#B65A3A]"
             >
               REGISTER NOW <ArrowRight className="w-4 h-4" />
             </Link>

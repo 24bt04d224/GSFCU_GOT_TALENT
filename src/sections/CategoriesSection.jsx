@@ -78,7 +78,7 @@ export default function CategoriesSection() {
       <div className="max-w-7xl mx-auto">
         
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 sm:mb-16 gap-6 border-b border-white/5 pb-8 sm:pb-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 sm:mb-16 gap-6 border-b border-[#C49A3A]/15 pb-8 sm:pb-10">
           <div>
             <div className="flex items-center gap-3 mb-2">
               <span className="w-8 h-[2px] bg-[#C96B35]" />
@@ -123,7 +123,7 @@ export default function CategoriesSection() {
                     </div>
 
                     {/* Title & Subtitle */}
-                    <h3 className="font-bebas text-xl xs:text-2xl sm:text-3xl lg:text-4xl uppercase tracking-wide text-[#F4E7D0] group-hover:text-white transition-colors leading-none mb-1">
+                    <h3 className="font-bebas text-xl xs:text-2xl sm:text-3xl lg:text-4xl uppercase tracking-wide text-[#F4E7D0] group-hover:text-[#F4E7D0] transition-colors leading-none mb-1">
                       {cat.title}
                     </h3>
                     <p className="font-mono text-[9px] xs:text-[10px] sm:text-xs text-[#C49A3A] uppercase tracking-wider mb-2.5">
@@ -142,7 +142,7 @@ export default function CategoriesSection() {
                       {cat.tags.map((tag, idx) => (
                         <span
                           key={idx}
-                          className="text-[9px] xs:text-[10px] font-mono text-[#F4E7D0]/80 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full"
+                          className="text-[9px] xs:text-[10px] font-mono text-[#F4E7D0]/90 bg-[#C49A3A]/5 border border-[#C49A3A]/20 px-2 py-0.5 rounded-full"
                         >
                           {tag}
                         </span>

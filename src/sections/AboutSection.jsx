@@ -98,7 +98,7 @@ export default function AboutSection() {
     <section
       id="about"
       ref={sectionRef}
-      className="py-20 sm:py-28 lg:py-32 px-4 sm:px-6 lg:px-12 bg-[#08080a] relative overflow-hidden text-[#F4E7D0] border-t border-white/10"
+      className="py-20 sm:py-28 lg:py-32 px-4 sm:px-6 lg:px-12 bg-[#08080a] relative overflow-hidden text-[#F4E7D0] border-t border-[#C49A3A]/20"
     >
       {/* Subtle warm light spill behind photograph */}
       <div className="absolute top-1/3 right-0 -translate-y-1/2 w-[500px] h-[500px] bg-[#C96B35]/4 rounded-full blur-[140px] pointer-events-none" />
@@ -144,7 +144,7 @@ export default function AboutSection() {
 
           {/* RIGHT SIDE: Cinematic Stage Photograph (Approx 50% width) */}
           <div ref={photoRef} className="lg:col-span-6 relative flex items-center justify-center">
-            <div className="relative w-full aspect-[4/5] sm:aspect-[16/11] lg:aspect-[4/5] rounded-[10px] bg-[#121218] border border-white/10 shadow-2xl overflow-hidden group">
+            <div className="relative w-full aspect-[4/5] sm:aspect-[16/11] lg:aspect-[4/5] rounded-[10px] bg-[#121218] border border-[#C49A3A]/25 shadow-2xl overflow-hidden group">
               <img
                 src={aboutDancePerfImg}
                 alt="GSFCU Stage Dancer Performance"
@@ -166,8 +166,8 @@ export default function AboutSection() {
         </div>
 
         {/* BOTTOM HIGHLIGHTS: Clean Horizontal Editorial Feature Row */}
-        <div ref={featuresRef} className="mt-16 sm:mt-24 pt-10 sm:pt-14 border-t border-white/10">
-          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-white/10">
+        <div ref={featuresRef} className="mt-16 sm:mt-24 pt-10 sm:pt-14 border-t border-[#C49A3A]/20">
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#C49A3A]/20">
             {features.map((item, idx) => {
               const IconComponent = item.icon;
               return (

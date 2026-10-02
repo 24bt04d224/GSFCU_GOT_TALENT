@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import gsap from 'gsap';
-import { EVENT_DETAILS } from '../data/eventData';
 import { Calendar, Clock, MapPin, ArrowRight, ArrowDown } from 'lucide-react';
 import heroBgImg from '../assets/hero_bg.png';
 
@@ -98,7 +97,7 @@ export default function HeroSection() {
 
           {/* Main Editorial Headline */}
           <div ref={titleRef} className="mb-4 sm:mb-6">
-            <h1 className="font-bebas uppercase tracking-wide leading-[0.88] select-none text-white text-[2.85rem] xs:text-5xl sm:text-7xl lg:text-[7.5rem]">
+            <h1 className="font-bebas uppercase tracking-wide leading-[0.88] select-none text-[#F4E7D0] text-[2.85rem] xs:text-5xl sm:text-7xl lg:text-[7.5rem]">
               <span className="block text-[#F4E7D0]">GSFCU</span>
               <span className="block text-[#F4E7D0]">
                 GOT <span className="text-[#C96B35]">TALENT</span>
@@ -128,7 +127,7 @@ export default function HeroSection() {
               </div>
             </div>
 
-            <div className="hidden sm:block w-[1px] h-6 bg-white/15" />
+            <div className="hidden sm:block w-[1px] h-6 bg-[#C49A3A]/25" />
 
             <div className="flex items-center gap-2.5">
               <Clock className="w-4 h-4 text-[#C49A3A]/80 shrink-0" />
@@ -138,7 +137,7 @@ export default function HeroSection() {
               </div>
             </div>
 
-            <div className="hidden sm:block w-[1px] h-6 bg-white/15" />
+            <div className="hidden sm:block w-[1px] h-6 bg-[#C49A3A]/25" />
 
             <div className="flex items-center gap-2.5">
               <MapPin className="w-4 h-4 text-[#C49A3A] shrink-0" />

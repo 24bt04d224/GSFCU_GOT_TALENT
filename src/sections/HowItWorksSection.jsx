@@ -7,7 +7,7 @@ const STEP_ICONS = [UserCheck, Radio, Trophy];
 
 export default function HowItWorksSection() {
   return (
-    <section id="how-it-works" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-[#08080a] relative overflow-hidden border-t border-white/5">
+    <section id="how-it-works" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-[#08080a] relative overflow-hidden border-t border-[#C49A3A]/20">
       <div className="max-w-7xl mx-auto">
         
         {/* Header */}
@@ -27,7 +27,7 @@ export default function HowItWorksSection() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 relative">
           
           {/* Horizontal Editorial Connector Bar */}
-          <div className="hidden md:block absolute top-12 left-8 right-8 h-[1px] bg-white/10 z-0" />
+          <div className="hidden md:block absolute top-12 left-8 right-8 h-[1px] bg-[#C49A3A]/20 z-0" />
 
           {HOW_IT_WORKS_STEPS.map((stepItem, idx) => {
             const Icon = STEP_ICONS[idx] || UserCheck;
@@ -61,7 +61,7 @@ export default function HowItWorksSection() {
                 </div>
 
                 {/* Bottom Step Action */}
-                <div className="pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-white/5 flex items-center justify-between text-xs font-mono text-[#B5ACA0]">
+                <div className="pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-[#C49A3A]/15 flex items-center justify-between text-xs font-mono text-[#B5ACA0]">
                   <span>STAGE PHASE {stepItem.step}</span>
                   {idx === 0 && (
                     <Link to="/register" className="text-[#C96B35] font-bold hover:underline flex items-center gap-1 min-h-[36px]">

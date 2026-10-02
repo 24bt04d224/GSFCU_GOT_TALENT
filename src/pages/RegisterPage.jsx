@@ -87,7 +87,7 @@ export default function RegisterPage() {
         origin: { y: 0.6 },
         colors: ['#C96B35', '#C49A3A', '#B65A3A', '#68734A', '#F4E7D0']
       });
-    } catch (err) {}
+    } catch {}
   };
 
   const resetForm = () => {
@@ -153,7 +153,7 @@ export default function RegisterPage() {
                   </span>
                 </div>
                 
-                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden flex">
+                <div className="w-full h-1.5 bg-[#C49A3A]/20 rounded-full overflow-hidden flex">
                   <div
                     className="h-full bg-[#C96B35] transition-all duration-500"
                     style={{ width: `${(step / 3) * 100}%` }}
@@ -164,7 +164,7 @@ export default function RegisterPage() {
               {/* STEP 01: YOUR DETAILS */}
               {step === 1 && (
                 <div className="space-y-5 sm:space-y-6">
-                  <div className="border-b border-white/10 pb-4 mb-4 sm:mb-6">
+                  <div className="border-b border-[#C49A3A]/20 pb-4 mb-4 sm:mb-6">
                     <h2 className="font-bebas text-xl sm:text-2xl text-[#F4E7D0] flex items-center gap-2 tracking-wide">
                       <User className="w-4 h-4 sm:w-5 sm:h-5 text-[#C96B35] shrink-0" /> STUDENT IDENTIFICATION
                     </h2>
@@ -277,7 +277,7 @@ export default function RegisterPage() {
               {/* STEP 02: YOUR TALENT */}
               {step === 2 && (
                 <div className="space-y-5 sm:space-y-6">
-                  <div className="border-b border-white/10 pb-4 mb-4 sm:mb-6">
+                  <div className="border-b border-[#C49A3A]/20 pb-4 mb-4 sm:mb-6">
                     <h2 className="font-bebas text-xl sm:text-2xl text-[#F4E7D0] flex items-center gap-2 tracking-wide">
                       <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#C49A3A] shrink-0" /> PERFORMANCE SPECIFICATIONS
                     </h2>
@@ -377,7 +377,7 @@ export default function RegisterPage() {
               {/* STEP 03: REVIEW & SUBMIT */}
               {step === 3 && (
                 <div className="space-y-5 sm:space-y-6">
-                  <div className="border-b border-white/10 pb-4 mb-4 sm:mb-6">
+                  <div className="border-b border-[#C49A3A]/20 pb-4 mb-4 sm:mb-6">
                     <h2 className="font-bebas text-xl sm:text-2xl text-[#F4E7D0] flex items-center gap-2 tracking-wide">
                       <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#C96B35] shrink-0" /> REVIEW SUMMARY
                     </h2>
@@ -386,7 +386,7 @@ export default function RegisterPage() {
 
                   <div className="space-y-4 font-sans text-xs">
                     <div className="p-4 rounded-lg bg-[#08080a] border border-[#C49A3A]/20 space-y-2">
-                      <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                      <div className="flex items-center justify-between border-b border-[#C49A3A]/15 pb-2">
                         <span className="font-mono text-[#C49A3A] uppercase font-bold">STUDENT DETAILS</span>
                         <button onClick={() => setStep(1)} className="text-[11px] text-[#C96B35] font-mono hover:underline p-1">EDIT</button>
                       </div>
@@ -397,7 +397,7 @@ export default function RegisterPage() {
                     </div>
 
                     <div className="p-4 rounded-lg bg-[#08080a] border border-[#C49A3A]/20 space-y-2">
-                      <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                      <div className="flex items-center justify-between border-b border-[#C49A3A]/15 pb-2">
                         <span className="font-mono text-[#C49A3A] uppercase font-bold">PERFORMANCE DETAILS</span>
                         <button onClick={() => setStep(2)} className="text-[11px] text-[#C96B35] font-mono hover:underline p-1">EDIT</button>
                       </div>
@@ -472,7 +472,7 @@ export default function RegisterPage() {
                   href={EVENT_DETAILS.whatsappGroupUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-mono font-bold text-xs uppercase tracking-wider py-3 px-4 rounded-md flex items-center justify-center gap-2 transition-colors shadow-lg min-h-[44px]"
+                  className="mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-[#F4E7D0] font-mono font-bold text-xs uppercase tracking-wider py-3 px-4 rounded-md flex items-center justify-center gap-2 transition-colors shadow-lg min-h-[44px]"
                 >
                   JOIN THE OFFICIAL WHATSAPP GROUP <ExternalLink className="w-4 h-4" />
                 </a>
@@ -482,7 +482,7 @@ export default function RegisterPage() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
                 <Link
                   to="/"
-                  className="w-full sm:w-auto px-6 sm:px-8 py-3.5 rounded-md bg-white/5 hover:bg-white/10 border border-[#C49A3A]/25 text-xs font-mono font-bold text-[#F4E7D0] uppercase tracking-wider transition-colors min-h-[44px] flex items-center justify-center"
+                  className="w-full sm:w-auto px-6 sm:px-8 py-3.5 rounded-md bg-[#C49A3A]/10 hover:bg-[#C49A3A]/20 border border-[#C49A3A]/25 text-xs font-mono font-bold text-[#F4E7D0] uppercase tracking-wider transition-colors min-h-[44px] flex items-center justify-center"
                 >
                   RETURN TO HOME
                 </Link>

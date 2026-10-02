@@ -9,12 +9,12 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-[#050507] border-t border-white/10 text-[#F4E7D0] pt-12 sm:pt-16 pb-8 sm:pb-12 relative overflow-hidden">
+    <footer className="bg-[#050507] border-t border-[#C49A3A]/20 text-[#F4E7D0] pt-12 sm:pt-16 pb-8 sm:pb-12 relative overflow-hidden">
       {/* Subtle top ambient bar */}
       <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#C96B35] to-transparent opacity-50" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-8 md:gap-12 pb-8 sm:pb-12 border-b border-white/10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-8 md:gap-12 pb-8 sm:pb-12 border-b border-[#C49A3A]/15">
           
           {/* Brand & Tagline Column */}
           <div className="sm:col-span-2 md:col-span-5 flex flex-col gap-3 sm:gap-4">

@@ -1,20 +1,54 @@
 @import "tailwindcss";
 
+:root {
+  /* Physical Event Decoration Palette */
+  --terracotta: #B65A3A;
+  --rust-orange: #C96B35;
+  --ochre: #C49A3A;
+  --warm-white: #F4E7D0;
+  --olive-green: #68734A;
+  --muted-warm: #B5ACA0;
+
+  /* Dark Stage Foundation */
+  --stage-dark: #08080a;
+  --stage-surface: #0b0b0e;
+  --stage-card: #101014;
+  --stage-card-alt: #14141a;
+
+  /* Controlled Warm Border Accents */
+  --warm-border-ochre: rgba(196, 154, 58, 0.25);
+  --warm-border-terracotta: rgba(182, 90, 58, 0.25);
+  --warm-border-subtle: rgba(196, 154, 58, 0.15);
+}
+
 @theme {
   --font-bebas: 'Bebas Neue', 'Impact', 'Arial Narrow', sans-serif;
   --font-syne: 'Syne', 'Arial Black', sans-serif;
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-hand: 'Caveat', 'Brush Script MT', cursive;
 
+  /* Event Decoration Core Palette */
+  --color-terracotta: #B65A3A;
+  --color-rust: #C96B35;
+  --color-rust-orange: #C96B35;
+  --color-ochre: #C49A3A;
+  --color-warm-white: #F4E7D0;
+  --color-olive: #68734A;
+  --color-olive-green: #68734A;
+  --color-muted-warm: #B5ACA0;
+
+  /* Semantic Brand Mappings */
   --color-brand-dark: #08080a;
-  --color-brand-surface: #0f0f13;
-  --color-brand-card: #14141a;
-  --color-brand-border: rgba(255, 255, 255, 0.1);
-  --color-brand-orange: #FF4500;
-  --color-brand-orange-hover: #E03E00;
-  --color-brand-gold: #D4AF37;
-  --color-brand-ivory: #F4F0EA;
-  --color-brand-muted: #9A958E;
+  --color-brand-surface: #0b0b0e;
+  --color-brand-card: #101014;
+  --color-brand-border: rgba(196, 154, 58, 0.2);
+  --color-brand-orange: #C96B35;
+  --color-brand-orange-hover: #B65A3A;
+  --color-brand-gold: #C49A3A;
+  --color-brand-ivory: #F4E7D0;
+  --color-brand-muted: #B5ACA0;
+  --color-brand-terracotta: #B65A3A;
+  --color-brand-olive: #68734A;
 
   --breakpoint-xs: 380px;
 }
@@ -26,7 +60,7 @@ html {
 
 body {
   background-color: #08080a;
-  color: #F4F0EA;
+  color: #F4E7D0;
   font-family: 'Plus Jakarta Sans', sans-serif;
   overflow-x: hidden;
   max-width: 100vw;
@@ -52,7 +86,7 @@ body {
 
 /* Subtle Gujarati / Indian geometric linework background pattern */
 .bg-gujarati-pattern {
-  background-image: radial-gradient(circle, rgba(255, 69, 0, 0.05) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(201, 107, 53, 0.07) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
@@ -68,5 +102,5 @@ body {
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #FF4500;
+  background: #C96B35;
 }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FAQS } from '../data/eventData';
-import { ChevronDown, HelpCircle, Sparkles } from 'lucide-react';
+import { ChevronDown, HelpCircle } from 'lucide-react';
 
 export default function FaqSection() {
   const [openIndex, setOpenIndex] = useState(0);
@@ -10,7 +10,7 @@ export default function FaqSection() {
   };
 
   return (
-    <section id="faq" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-[#0b0b0e] relative z-10 border-t border-white/5">
+    <section id="faq" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-[#0b0b0e] relative z-10 border-t border-[#C49A3A]/20">
       <div className="max-w-4xl mx-auto">
         
         {/* Header */}
@@ -52,7 +52,7 @@ export default function FaqSection() {
                     </span>
                     <span>{faq.question}</span>
                   </span>
-                  <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/5 flex items-center justify-center text-[#C96B35] transition-transform duration-300 shrink-0 ${
+                  <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#C49A3A]/10 flex items-center justify-center text-[#C96B35] transition-transform duration-300 shrink-0 ${
                     isOpen ? 'rotate-180 bg-[#C96B35] text-[#F4E7D0]' : ''
                   }`}>
                     <ChevronDown className="w-4 h-4" />
@@ -60,7 +60,7 @@ export default function FaqSection() {
                 </button>
 
                 {isOpen && (
-                  <div className="px-4 sm:px-6 pb-4 sm:pb-6 pt-0 text-xs sm:text-sm text-[#B5ACA0] leading-relaxed border-t border-white/5 animate-in fade-in duration-200">
+                  <div className="px-4 sm:px-6 pb-4 sm:pb-6 pt-0 text-xs sm:text-sm text-[#B5ACA0] leading-relaxed border-t border-[#C49A3A]/15 animate-in fade-in duration-200">
                     <p className="mt-3 sm:mt-4">{faq.answer}</p>
                   </div>
                 )}
@@ -70,7 +70,7 @@ export default function FaqSection() {
         </div>
 
         {/* Support callout */}
-        <div className="mt-10 sm:mt-12 text-center p-5 sm:p-6 rounded-xl sm:rounded-2xl bg-white/5 border border-[#C49A3A]/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-10 sm:mt-12 text-center p-5 sm:p-6 rounded-xl sm:rounded-2xl bg-[#101014] border border-[#C49A3A]/20 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-center sm:text-left">
             <h3 className="font-syne font-bold text-sm text-[#F4E7D0]">Still have questions?</h3>
             <p className="text-xs text-[#B5ACA0]">Reach out to the organizing team directly.</p>

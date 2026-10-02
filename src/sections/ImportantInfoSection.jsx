@@ -6,7 +6,7 @@ const INFO_ICONS = [Calendar, ShieldCheck, UserCheck, Music, Bell];
 
 export default function ImportantInfoSection() {
   return (
-    <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-[#0b0b0e] border-y border-white/5 relative z-10">
+    <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-[#0b0b0e] border-y border-[#C49A3A]/15 relative z-10">
       <div className="max-w-7xl mx-auto">
         
         {/* Header */}
@@ -42,7 +42,7 @@ export default function ImportantInfoSection() {
                 <p className="text-xs text-[#B5ACA0] leading-relaxed">
                   {info.detail}
                 </p>
-                <span className="text-[10px] font-mono text-[#C49A3A]/70 uppercase pt-2 border-t border-white/5">
+                <span className="text-[10px] font-mono text-[#C49A3A]/70 uppercase pt-2 border-t border-[#C49A3A]/15">
                   Organizing Committee Notice
                 </span>
               </div>

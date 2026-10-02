@@ -11,7 +11,7 @@ export default function EventInfoStrip() {
   ];
 
   return (
-    <div id="event-strip" className="w-full bg-[#0a0a0d] py-4 sm:py-5 relative z-20 overflow-hidden select-none border-t border-white/5">
+    <div id="event-strip" className="w-full bg-[#0a0a0d] py-4 sm:py-5 relative z-20 overflow-hidden select-none border-t border-[#C49A3A]/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 xs:grid-cols-2 lg:flex lg:flex-wrap items-center justify-between gap-3 sm:gap-4 md:gap-8">
           {items.map((item, idx) => {

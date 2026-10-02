@@ -1,12 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import GarbaMandalaSVG from '../components/GarbaMandalaSVG';
-import { EVENT_DETAILS } from '../data/eventData';
 import { ArrowRight, Sparkles } from 'lucide-react';
 
 export default function RegistrationCtaSection() {
   return (
-    <section className="py-16 sm:py-28 px-4 sm:px-6 lg:px-8 bg-[#0b0b0e] relative overflow-hidden text-center z-10 border-t border-white/10">
+    <section className="py-16 sm:py-28 px-4 sm:px-6 lg:px-8 bg-[#0b0b0e] relative overflow-hidden text-center z-10 border-t border-[#C49A3A]/20">
       
       {/* Background Mandala overlay */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] sm:w-[500px] sm:h-[500px] lg:w-[600px] lg:h-[600px] opacity-15 pointer-events-none">
