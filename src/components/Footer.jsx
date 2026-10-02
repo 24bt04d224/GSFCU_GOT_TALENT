@@ -81,6 +81,7 @@ export default function Footer() {
               <a href="#rules" className="hover:text-[#C96B35] transition-colors py-1 min-h-[36px] flex items-center">Rules</a>
               <a href="#faq" className="hover:text-[#C96B35] transition-colors py-1 min-h-[36px] flex items-center">FAQ</a>
               <Link to="/register" className="text-[#C96B35] font-semibold hover:underline py-1 min-h-[36px] flex items-center">Register Now</Link>
+              <Link to="/admin" className="text-[#C49A3A] hover:text-[#C96B35] transition-colors py-1 min-h-[36px] flex items-center">Organizer Portal</Link>
             </div>
             
             <div className="pt-2 sm:pt-4">
@@ -98,7 +99,13 @@ export default function Footer() {
         {/* Bottom copyright */}
         <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left text-[10px] sm:text-[11px] text-[#B5ACA0]">
           <p>© 2026 GSFC University. All Rights Reserved.</p>
-          <p className="font-mono text-[#C49A3A]/80">GSFCU GOT TALENT 2026 OFFICIAL EVENT PORTAL</p>
+          <div className="flex items-center gap-4">
+            <span className="font-mono text-[#B5ACA0]">GSFCU GOT TALENT 2026</span>
+            <span>•</span>
+            <Link to="/admin" className="font-mono text-[#C49A3A] hover:text-[#C96B35] transition-colors">
+              ORGANIZER DASHBOARD 🔒
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

@@ -3,15 +3,20 @@ import { Link } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import DigitalPassModal from '../components/DigitalPassModal';
+import { saveRegistration } from '../services/registrationService';
 import { EVENT_DETAILS, TALENT_CATEGORIES } from '../data/eventData';
 import { 
-  User, Sparkles, ArrowRight, ArrowLeft, MessageSquare, ExternalLink, ShieldCheck, CheckCircle2 
+  User, Sparkles, ArrowRight, ArrowLeft, MessageSquare, ExternalLink, ShieldCheck, CheckCircle2, QrCode, AlertCircle 
 } from 'lucide-react';
 
 export default function RegisterPage() {
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [registrationId, setRegistrationId] = useState('');
+  const [passModalOpen, setPassModalOpen] = useState(false);
+  const [registeredRecord, setRegisteredRecord] = useState(null);
+  const [submitError, setSubmitError] = useState('');
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -74,24 +79,31 @@ export default function RegisterPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const newId = `GT26-${randomNum}`;
-    setRegistrationId(newId);
-    setSubmitted(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
+    setSubmitError('');
     try {
-      confetti({
-        particleCount: 120,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ['#C96B35', '#C49A3A', '#B65A3A', '#68734A', '#F4E7D0']
-      });
-    } catch {}
+      const record = saveRegistration(formData);
+      setRegisteredRecord(record);
+      setRegistrationId(record.id);
+      setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      try {
+        confetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ['#C96B35', '#C49A3A', '#B65A3A', '#68734A', '#F4E7D0']
+        });
+      } catch {}
+    } catch (err) {
+      setSubmitError(err.message || 'Registration failed. Please check your information.');
+    }
   };
 
   const resetForm = () => {
     setSubmitted(false);
+    setRegisteredRecord(null);
+    setSubmitError('');
     setStep(1);
     setFormData({
       fullName: '',
@@ -408,6 +420,16 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
+                  {submitError && (
+                    <div className="mt-4 p-4 rounded-lg bg-red-950/40 border border-red-500/50 flex items-start gap-3 text-red-200 text-xs">
+                      <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="block font-mono uppercase text-red-300">Registration Notice</strong>
+                        <p>{submitError}</p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="pt-4 sm:pt-6 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
                     <button
                       type="button"
@@ -445,7 +467,7 @@ export default function RegisterPage() {
               </h2>
 
               <p className="text-xs sm:text-sm text-[#B5ACA0] max-w-md mx-auto mb-6 font-sans">
-                Your entry has been successfully logged. Keep your official registration ID handy for audition reporting.
+                Your entry has been securely logged into the official GSFC University event roster. View or print your digital pass below.
               </p>
 
               {/* ID Badge */}
@@ -454,6 +476,24 @@ export default function RegisterPage() {
                 <span className="font-bebas text-3xl sm:text-4xl text-[#C96B35] tracking-wider block">
                   {registrationId}
                 </span>
+              </div>
+
+              {/* Digital VIP Entry Pass Callout */}
+              <div className="max-w-md mx-auto mb-6 sm:mb-8 p-5 rounded-xl bg-gradient-to-r from-[#C96B35]/15 via-[#C49A3A]/10 to-[#B65A3A]/15 border border-[#C96B35]/40 text-center">
+                <div className="flex items-center justify-center gap-2 mb-2 text-[#C49A3A]">
+                  <QrCode className="w-5 h-5 text-[#C96B35]" />
+                  <span className="font-mono text-xs uppercase font-bold tracking-wider">OFFICIAL PASS READY</span>
+                </div>
+                <p className="text-xs text-[#B5ACA0] mb-4 font-sans">
+                  Bring your scannable digital badge on your mobile phone or print a paper pass for entry at the auditorium gates.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setPassModalOpen(true)}
+                  className="w-full bg-[#C96B35] hover:bg-[#B65A3A] text-[#F4E7D0] font-mono font-bold text-xs uppercase tracking-wider py-3.5 px-6 rounded-md flex items-center justify-center gap-2 transition-all shadow-xl hover:scale-[1.01] border border-[#C96B35] min-h-[44px]"
+                >
+                  <QrCode className="w-4 h-4" /> VIEW OFFICIAL DIGITAL PASS & QR TICKET
+                </button>
               </div>
 
               {/* WhatsApp Callout */}
@@ -500,6 +540,12 @@ export default function RegisterPage() {
 
         </div>
       </main>
+
+      <DigitalPassModal
+        isOpen={passModalOpen}
+        onClose={() => setPassModalOpen(false)}
+        registration={registeredRecord}
+      />
 
       <Footer />
     </div>
