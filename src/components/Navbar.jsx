@@ -89,6 +89,13 @@ export default function Navbar() {
               <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#C96B35] transition-all duration-300 group-hover:w-full" />
             </a>
           ))}
+          <Link
+            to="/admin"
+            className="text-xs font-mono tracking-widest text-[#C49A3A] hover:text-[#C96B35] uppercase transition-colors relative group py-1"
+          >
+            PORTAL 🔒
+            <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#C96B35] transition-all duration-300 group-hover:w-full" />
+          </Link>
         </nav>
 
         {/* Right: CTA Button */}
@@ -133,6 +140,14 @@ export default function Navbar() {
                   <span className="text-[#C96B35]">→</span>
                 </a>
               ))}
+              <Link
+                to="/admin"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-xs font-mono tracking-widest text-[#C49A3A] hover:text-[#C96B35] uppercase transition-colors py-3 border-b border-[#C49A3A]/15 flex items-center justify-between min-h-[44px]"
+              >
+                <span>ORGANIZER PORTAL 🔒</span>
+                <span className="text-[#C49A3A]">→</span>
+              </Link>
             </nav>
             <Link
               to="/register"

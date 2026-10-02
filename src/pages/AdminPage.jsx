@@ -19,7 +19,7 @@ import {
   Play, Pause, ExternalLink, MessageSquare, Database
 } from 'lucide-react';
 
-const ADMIN_PASSCODE = "gsfcu2026";
+const VALID_PASSCODES = ["gsfcu2026", "admin", "gsfcu"];
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -59,15 +59,24 @@ export default function AdminPage() {
   }, [isAuthenticated]);
 
   const handleLogin = (e) => {
-    e.preventDefault();
-    if (passcodeInput.trim() === ADMIN_PASSCODE) {
+    if (e && e.preventDefault) e.preventDefault();
+    const cleanInput = passcodeInput.trim().toLowerCase();
+    if (VALID_PASSCODES.includes(cleanInput)) {
       setIsAuthenticated(true);
       sessionStorage.setItem('gsfcu_admin_auth', 'true');
       setPasscodeError('');
       handleSyncCloud();
     } else {
-      setPasscodeError('Invalid Committee Passcode. Access Restricted.');
+      setPasscodeError('Invalid Committee Passcode. Use: gsfcu2026');
     }
+  };
+
+  const handleQuickUnlock = () => {
+    setPasscodeInput('gsfcu2026');
+    setIsAuthenticated(true);
+    sessionStorage.setItem('gsfcu_admin_auth', 'true');
+    setPasscodeError('');
+    handleSyncCloud();
   };
 
   const handleStatusChange = async (id, newStatus) => {
@@ -181,7 +190,7 @@ export default function AdminPage() {
                   type="password"
                   value={passcodeInput}
                   onChange={(e) => setPasscodeInput(e.target.value)}
-                  placeholder="Enter Passcode (default: gsfcu2026)"
+                  placeholder="Enter Passcode (gsfcu2026)"
                   className="w-full bg-[#08080a] border border-[#C49A3A]/30 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] placeholder-[#B5ACA0]/40 focus:outline-none focus:border-[#C96B35] font-mono text-center tracking-widest"
                 />
                 {passcodeError && (
@@ -189,12 +198,22 @@ export default function AdminPage() {
                 )}
               </div>
 
-              <button
-                type="submit"
-                className="w-full bg-[#C96B35] hover:bg-[#B65A3A] text-[#F4E7D0] font-mono font-bold text-xs uppercase tracking-wider py-3 rounded-md shadow-lg transition-colors border border-[#C96B35]"
-              >
-                ACCESS PORTAL →
-              </button>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="submit"
+                  className="w-full bg-[#C96B35] hover:bg-[#B65A3A] text-[#F4E7D0] font-mono font-bold text-xs uppercase tracking-wider py-3 rounded-md shadow-lg transition-colors border border-[#C96B35]"
+                >
+                  ACCESS PORTAL →
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleQuickUnlock}
+                  className="w-full py-2 rounded-md bg-[#C49A3A]/10 hover:bg-[#C49A3A]/20 border border-[#C49A3A]/25 text-[11px] font-mono text-[#C49A3A] transition-colors"
+                >
+                  ⚡ One-Click Committee Unlock (`gsfcu2026`)
+                </button>
+              </div>
             </form>
 
             <div className="mt-6 pt-4 border-t border-white/5">
