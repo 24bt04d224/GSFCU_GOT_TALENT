@@ -2,7 +2,7 @@
 
 ## 1. Project Overview & Context
 - **Project Name**: GSFCU Got Talent 2026 (Navratri Special Edition)
-- **Repository**: `https://github.com/Maanpatel8436/GSFCU_GOT_TALENT.git`
+- **Repository**: `https://github.com/24bt04d224/GSFCU_GOT_TALENT.git`
 - **Master Workspace Integration**: Connected with Master Folder workflow for centralized management, tracking, and future feature rollouts.
 - **Tech Stack**:
   - **Frontend**: React 19, Vite, Tailwind CSS v4, GSAP (GreenSock), Canvas Confetti, Lucide React
@@ -57,7 +57,7 @@ GSFCU_GOT_TALENT/
 - **Git Push Policy**:
   - **DO NOT push to master-folder or any remote without explicit user command.** Keep local work isolated and safe.
 - **Git Remote Management**:
-  - Origin remote points to `https://github.com/Maanpatel8436/GSFCU_GOT_TALENT.git`.
+  - Origin remote points to `https://github.com/24bt04d224/GSFCU_GOT_TALENT.git`.
   - When integrated as a submodule or part of a multi-repo master workspace, maintain clean atomic commits following Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`).
 - **Backend / Database Integration**:
   - Connect registration submissions to a live backend (PostgreSQL / Firebase / Google Sheets API) when ready.

@@ -1,16 +1,51 @@
-# React + Vite
+# 🎭 GSFCU Got Talent 2026 — Navratri Special Edition
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The official web platform and audition management portal for **GSFC University Got Talent 2026**.
 
-Currently, two official plugins are available:
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2F24bt04d224%2FGSFCU_GOT_TALENT)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 🌟 Key Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Cinematic Event Design**: Navratri-inspired color palette (**Rust Orange**, **Terracotta**, **Ochre**, **Warm White**, **Olive Green**) with rich stage aesthetic.
+- **Multi-Step Talent Registration**: Comprehensive form with live field validations, participant count, and performance category selection.
+- **Audio & Media Track Upload**: Direct backing track upload for singers, dancers, and performers with in-form audio test player and Google Drive support.
+- **Scannable VIP Digital Entry Pass**: Dynamic QR code ticket generated for verified gate check-in at the university auditorium.
+- **Organizing Committee Dashboard (`/admin`)**: Passcode-protected console (`gsfcu2026`) featuring real-time KPI metrics, express scanner check-in, in-dashboard sound console audio player, candidate search/filter, and instant CSV call sheet export.
+- **Direct Candidate Notifications**: Automated 1-click WhatsApp and Email confirmation dispatchers.
+- **Cloud Database Ready**: Live Supabase PostgreSQL and storage bucket integration with offline local storage fallback.
 
-## Expanding the Oxlint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## 🚀 Live Deployments
+
+- **1-Click Vercel Deploy**: [Deploy to Vercel](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2F24bt04d224%2FGSFCU_GOT_TALENT)
+- **Live Event Website**: [https://maanpatel8436.github.io/GSFCU_GOT_TALENT/](https://maanpatel8436.github.io/GSFCU_GOT_TALENT/)
+- **Live Organizer Dashboard**: [https://maanpatel8436.github.io/GSFCU_GOT_TALENT/admin](https://maanpatel8436.github.io/GSFCU_GOT_TALENT/admin) *(Passcode: `gsfcu2026`)*
+
+---
+
+## 🛠️ Local Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Run Oxlint
+npm run lint
+```
+
+---
+
+## 🗄️ Database Setup (Supabase)
+
+1. Create a free project at [supabase.com](https://supabase.com/).
+2. Run the SQL statements from [`supabase_schema.sql`](./supabase_schema.sql) in your Supabase SQL editor.
+3. Copy `.env.example` to `.env` and fill in your Supabase Project URL and Anon Key.

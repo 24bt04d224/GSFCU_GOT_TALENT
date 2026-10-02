@@ -14,7 +14,7 @@ This guide documents the integration between **GSFCU Got Talent** and master wor
 If your `master-folder` is a parent Git repository coordinating multiple projects, you can attach this repository as a submodule:
 ```bash
 # Inside master-folder:
-git submodule add https://github.com/Maanpatel8436/GSFCU_GOT_TALENT.git projects/gsfcu-got-talent
+git submodule add https://github.com/24bt04d224/GSFCU_GOT_TALENT.git projects/gsfcu-got-talent
 git commit -m "feat: link GSFCU Got Talent as submodule"
 ```
 
