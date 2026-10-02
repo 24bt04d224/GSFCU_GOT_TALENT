@@ -21,8 +21,7 @@ The official web platform and audition management portal for **GSFC University G
 ## 🚀 Deployments & Repositories
 
 - **1-Click Vercel Deploy**: [Deploy to Vercel](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2F24bt04d224%2FGSFCU_GOT_TALENT)
-- **Primary GitHub Repository**: [https://github.com/Maanpatel8436/GSFCU_GOT_TALENT](https://github.com/Maanpatel8436/GSFCU_GOT_TALENT)
-- **Target GitHub Repository**: [https://github.com/24bt04d224/GSFCU_GOT_TALENT](https://github.com/24bt04d224/GSFCU_GOT_TALENT)
+- **Master Repository**: [https://github.com/24bt04d224/GSFCU_GOT_TALENT](https://github.com/24bt04d224/GSFCU_GOT_TALENT)
 
 ---
 

@@ -390,7 +390,7 @@ Your audition registration for *GSFCU GOT TALENT 2026* has been officially recei
 1. Please report 20 minutes prior to your time slot with your digital pass.
 2. If using backing audio tracks, verify it at the Sound Console desk.
 
-Official Portal: ${typeof window !== 'undefined' ? window.location.origin : 'https://github.com/Maanpatel8436/GSFCU_GOT_TALENT'}
+Official Portal: ${typeof window !== 'undefined' ? window.location.origin : 'https://github.com/24bt04d224/GSFCU_GOT_TALENT'}
 Best of luck, and make the stage yours!`;
 
   return `https://wa.me/${phoneParam}?text=${encodeURIComponent(text)}`;
