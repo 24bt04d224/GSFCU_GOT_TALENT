@@ -24,8 +24,8 @@
 @theme {
   --font-bebas: 'Bebas Neue', 'Impact', 'Arial Narrow', sans-serif;
   --font-syne: 'Syne', 'Arial Black', sans-serif;
-  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-hand: 'Caveat', 'Brush Script MT', cursive;
+  --font-sans: 'Outfit', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-hand: 'Kalam', 'Caveat', cursive;
 
   /* Event Decoration Core Palette */
   --color-terracotta: #B65A3A;
@@ -61,7 +61,7 @@ html {
 body {
   background-color: #08080a;
   color: #F4E7D0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
   overflow-x: hidden;
   max-width: 100vw;
   -webkit-tap-highlight-color: transparent;
@@ -76,7 +76,7 @@ body {
 }
 
 .font-hand {
-  font-family: 'Caveat', cursive;
+  font-family: 'Kalam', 'Caveat', cursive;
 }
 
 /* Tactile print & photographic paper grain overlay */
