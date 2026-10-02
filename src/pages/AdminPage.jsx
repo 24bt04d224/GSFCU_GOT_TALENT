@@ -1,18 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import DigitalPassModal from '../components/DigitalPassModal';
+import { isSupabaseConfigured } from '../services/supabaseClient';
 import {
   getRegistrations,
+  fetchRegistrationsFromCloud,
   updateRegistrationStatus,
   toggleCheckInStatus,
   deleteRegistration,
-  exportRegistrationsCSV
+  exportRegistrationsCSV,
+  generateWhatsAppLink
 } from '../services/registrationService';
 import {
   Users, CheckCircle2, Award, Download, Search, Filter,
-  Lock, ArrowLeft, QrCode, Trash2, Eye, RefreshCw
+  Lock, QrCode, Trash2, Eye, RefreshCw, Music,
+  Play, Pause, ExternalLink, MessageSquare, Database
 } from 'lucide-react';
 
 const ADMIN_PASSCODE = "gsfcu2026";
@@ -24,22 +28,33 @@ export default function AdminPage() {
   const [passcodeInput, setPasscodeInput] = useState('');
   const [passcodeError, setPasscodeError] = useState('');
   
-  const [registrations, setRegistrations] = useState([]);
+  const [registrations, setRegistrations] = useState(() => getRegistrations());
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [selectedSchool, setSelectedSchool] = useState('ALL');
   const [selectedPass, setSelectedPass] = useState(null);
   const [quickCheckInId, setQuickCheckInId] = useState('');
   const [checkInMsg, setCheckInMsg] = useState('');
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  const loadRegistrations = () => {
-    const list = getRegistrations();
-    setRegistrations(list);
+  // Sound Engineer In-Dashboard Audio Player
+  const [activeTrack, setActiveTrack] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef(null);
+
+  const handleSyncCloud = async () => {
+    setIsSyncing(true);
+    try {
+      const data = await fetchRegistrationsFromCloud();
+      setRegistrations(data);
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   useEffect(() => {
     if (isAuthenticated) {
-      loadRegistrations();
+      handleSyncCloud();
     }
   }, [isAuthenticated]);
 
@@ -49,30 +64,33 @@ export default function AdminPage() {
       setIsAuthenticated(true);
       sessionStorage.setItem('gsfcu_admin_auth', 'true');
       setPasscodeError('');
-      loadRegistrations();
+      handleSyncCloud();
     } else {
       setPasscodeError('Invalid Committee Passcode. Access Restricted.');
     }
   };
 
-  const handleStatusChange = (id, newStatus) => {
-    const updated = updateRegistrationStatus(id, newStatus);
+  const handleStatusChange = async (id, newStatus) => {
+    const updated = await updateRegistrationStatus(id, newStatus);
     setRegistrations(updated);
   };
 
-  const handleCheckInToggle = (id) => {
-    const updated = toggleCheckInStatus(id);
+  const handleCheckInToggle = async (id) => {
+    const updated = await toggleCheckInStatus(id);
     setRegistrations(updated);
   };
 
-  const handleDelete = (id, name) => {
-    if (window.confirm(`Are you sure you want to remove ${name} (${id})?`)) {
-      const updated = deleteRegistration(id);
+  const handleDelete = async (id, name) => {
+    if (window.confirm(`Are you sure you want to remove candidate ${name} (${id})?`)) {
+      const updated = await deleteRegistration(id);
       setRegistrations(updated);
+      if (activeTrack && activeTrack.id === id) {
+        stopAudio();
+      }
     }
   };
 
-  const handleQuickCheckIn = (e) => {
+  const handleQuickCheckIn = async (e) => {
     e.preventDefault();
     const query = quickCheckInId.trim().toUpperCase();
     if (!query) return;
@@ -83,15 +101,40 @@ export default function AdminPage() {
 
     if (candidate) {
       if (candidate.checkedIn) {
-        setCheckInMsg(`Candidate ${candidate.fullName} (${candidate.id}) is ALREADY checked in!`);
+        setCheckInMsg(`Notice: ${candidate.fullName} (${candidate.id}) is ALREADY verified and checked in!`);
       } else {
-        handleCheckInToggle(candidate.id);
-        setCheckInMsg(`Verified! ${candidate.fullName} (${candidate.id}) successfully CHECKED IN.`);
+        await handleCheckInToggle(candidate.id);
+        setCheckInMsg(`Verified! ${candidate.fullName} (${candidate.id}) successfully CHECKED IN at Stage.`);
       }
       setQuickCheckInId('');
     } else {
-      setCheckInMsg(`Error: Candidate with ID or Enrollment '${query}' was not found.`);
+      setCheckInMsg(`Error: Candidate with ID or Enrollment '${query}' was not found in database.`);
     }
+  };
+
+  // Audio Playback Controls
+  const playTrack = (candidate) => {
+    if (!candidate.trackUrl) return;
+    if (activeTrack && activeTrack.id === candidate.id && isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      setActiveTrack(candidate);
+      setIsPlaying(true);
+      setTimeout(() => {
+        if (audioRef.current) {
+          audioRef.current.play().catch((err) => console.log('Audio autoplay prevented:', err));
+        }
+      }, 50);
+    }
+  };
+
+  const stopAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    setActiveTrack(null);
+    setIsPlaying(false);
   };
 
   // Filtered dataset
@@ -110,8 +153,9 @@ export default function AdminPage() {
 
   // KPI Calculations
   const totalCount = registrations.length;
-  const shortlistedCount = registrations.filter((r) => r.status.includes('Shortlist')).length;
+  const shortlistedCount = registrations.filter((r) => r.status && r.status.includes('Shortlist')).length;
   const checkedInCount = registrations.filter((r) => r.checkedIn).length;
+  const audioTracksCount = registrations.filter((r) => r.trackUrl || r.driveLink).length;
 
   if (!isAuthenticated) {
     return (
@@ -128,7 +172,7 @@ export default function AdminPage() {
               ORGANIZER PORTAL
             </h1>
             <p className="text-xs text-[#B5ACA0] font-sans mb-6">
-              Enter organizing committee credentials to manage auditions and registrations.
+              Enter organizing committee credentials to manage auditions, track database, and back-stage console.
             </p>
 
             <form onSubmit={handleLogin} className="space-y-4">
@@ -138,8 +182,7 @@ export default function AdminPage() {
                   value={passcodeInput}
                   onChange={(e) => setPasscodeInput(e.target.value)}
                   placeholder="Enter Passcode (default: gsfcu2026)"
-                  className="w-full bg-[#08080a] border border-[#C49A3A]/25 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] placeholder-[#B5ACA0]/40 focus:outline-none focus:border-[#C96B35] font-mono text-center tracking-widest"
-                  autoFocus
+                  className="w-full bg-[#08080a] border border-[#C49A3A]/30 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] placeholder-[#B5ACA0]/40 focus:outline-none focus:border-[#C96B35] font-mono text-center tracking-widest"
                 />
                 {passcodeError && (
                   <p className="text-xs text-red-400 mt-2 font-mono">{passcodeError}</p>
@@ -150,13 +193,13 @@ export default function AdminPage() {
                 type="submit"
                 className="w-full bg-[#C96B35] hover:bg-[#B65A3A] text-[#F4E7D0] font-mono font-bold text-xs uppercase tracking-wider py-3 rounded-md shadow-lg transition-colors border border-[#C96B35]"
               >
-                UNLOCK AUDITION DESK →
+                ACCESS PORTAL →
               </button>
             </form>
 
             <div className="mt-6 pt-4 border-t border-white/5">
-              <Link to="/" className="text-xs font-mono text-[#B5ACA0] hover:text-[#C96B35] inline-flex items-center gap-1.5 transition-colors">
-                <ArrowLeft className="w-3.5 h-3.5" /> Return to Event Homepage
+              <Link to="/" className="text-xs font-mono text-[#B5ACA0] hover:text-[#C96B35] transition-colors">
+                ← Return to Event Site
               </Link>
             </div>
 
@@ -171,131 +214,228 @@ export default function AdminPage() {
     <div className="min-h-screen bg-[#08080a] text-[#F4E7D0] flex flex-col font-sans">
       <Navbar />
 
-      <main className="flex-grow pt-24 sm:pt-28 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+      <main className="flex-grow pt-24 sm:pt-28 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 pb-6 border-b border-[#C49A3A]/20">
+        {/* Top Header Bar */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 mb-8 border-b border-[#C49A3A]/20">
           <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-mono text-xs text-[#C49A3A] uppercase tracking-widest font-bold">
-                AUDITION DESK • LIVE CONSOLE
-              </span>
+            <div className="flex items-center gap-3">
+              <h1 className="font-bebas text-3xl sm:text-4xl text-[#F4E7D0] tracking-wide uppercase">
+                ORGANIZING COMMITTEE <span className="text-[#C96B35]">DASHBOARD</span>
+              </h1>
+              
+              {/* Cloud Database Status Badge */}
+              <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono border ${
+                isSupabaseConfigured()
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                  : 'bg-[#C49A3A]/10 border-[#C49A3A]/30 text-[#C49A3A]'
+              }`}>
+                <Database className="w-3 h-3" />
+                <span>{isSupabaseConfigured() ? 'SUPABASE CLOUD ACTIVE' : 'LOCAL MODE (READY FOR CLOUD)'}</span>
+              </div>
             </div>
-            <h1 className="font-bebas text-3xl sm:text-5xl uppercase tracking-wider text-[#F4E7D0] leading-none">
-              EVENT <span className="text-[#C96B35]">MANAGEMENT DASHBOARD</span>
-            </h1>
+
+            <p className="text-xs text-[#B5ACA0] font-sans mt-0.5">
+              Audition Check-in, Sound Tracks Console & Registration Records Management
+            </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              onClick={handleSyncCloud}
+              disabled={isSyncing}
+              className="px-3.5 py-2 rounded-md bg-[#0f0e13] hover:bg-white/5 border border-[#C49A3A]/25 text-xs font-mono text-[#F4E7D0] flex items-center gap-2 transition-colors disabled:opacity-50"
+              title="Sync latest submissions from cloud database"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-[#C96B35] ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? 'Syncing...' : 'Sync Data'}</span>
+            </button>
+
             <button
               onClick={exportRegistrationsCSV}
-              className="bg-[#14141a] hover:bg-[#C49A3A]/10 text-[#C49A3A] border border-[#C49A3A]/30 px-4 py-2.5 rounded-lg text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-colors shadow-sm"
+              className="px-4 py-2 rounded-md bg-[#C49A3A]/15 hover:bg-[#C49A3A]/25 border border-[#C49A3A]/30 text-xs font-mono text-[#F4E7D0] font-bold flex items-center gap-2 transition-colors shadow-md"
             >
-              <Download className="w-4 h-4" /> EXPORT CALL SHEET (CSV)
+              <Download className="w-3.5 h-3.5 text-[#C49A3A]" />
+              <span>EXPORT CALL SHEET (CSV)</span>
             </button>
+
             <button
-              onClick={loadRegistrations}
-              className="p-2.5 rounded-lg bg-[#14141a] hover:bg-white/10 text-[#B5ACA0] border border-white/10"
-              title="Refresh Data"
+              onClick={() => {
+                sessionStorage.removeItem('gsfcu_admin_auth');
+                setIsAuthenticated(false);
+              }}
+              className="px-3 py-2 rounded-md bg-red-950/20 hover:bg-red-900/40 border border-red-500/30 text-xs font-mono text-red-300 transition-colors"
             >
-              <RefreshCw className="w-4 h-4" />
+              Logout
             </button>
           </div>
         </div>
 
-        {/* KPI Metrics Summary Grid */}
-        <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          
-          <div className="bg-[#0f0e13] border border-[#C49A3A]/20 rounded-xl p-5 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-[#C96B35]/15 border border-[#C96B35]/30 flex items-center justify-center text-[#C96B35] shrink-0">
-              <Users className="w-6 h-6" />
-            </div>
+        {/* Quick Check-In Barcode / Passcode Input */}
+        <div className="mb-8 p-4 sm:p-6 rounded-2xl bg-gradient-to-r from-[#0f0e13] via-[#14141c] to-[#0f0e13] border border-[#C96B35]/35 shadow-xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <span className="font-mono text-[10px] text-[#B5ACA0] uppercase block">TOTAL REGISTRATIONS</span>
-              <span className="font-bebas text-3xl sm:text-4xl text-[#F4E7D0] leading-none mt-0.5 block">
-                {totalCount}
+              <span className="text-[10px] font-mono text-[#C49A3A] uppercase tracking-wider font-bold block mb-1">
+                GATE VERIFICATION & EXPRESS PASS SCANNER
               </span>
+              <h2 className="font-bebas text-xl sm:text-2xl text-[#F4E7D0] tracking-wide">
+                AUDITORIUM GATE CHECK-IN
+              </h2>
             </div>
+
+            <form onSubmit={handleQuickCheckIn} className="flex items-center gap-2 w-full md:w-auto">
+              <div className="relative flex-grow md:w-80">
+                <QrCode className="w-4 h-4 text-[#C96B35] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={quickCheckInId}
+                  onChange={(e) => setQuickCheckInId(e.target.value)}
+                  placeholder="Scan QR / Enter Registration ID or Enrollment"
+                  className="w-full bg-[#08080a] border border-[#C49A3A]/30 rounded-lg pl-10 pr-4 py-2.5 text-xs text-[#F4E7D0] placeholder-[#B5ACA0]/50 font-mono focus:outline-none focus:border-[#C96B35]"
+                />
+              </div>
+              <button
+                type="submit"
+                className="bg-[#C96B35] hover:bg-[#B65A3A] text-[#F4E7D0] text-xs font-mono font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg border border-[#C96B35] transition-colors whitespace-nowrap shadow-md"
+              >
+                CHECK IN
+              </button>
+            </form>
           </div>
 
-          <div className="bg-[#0f0e13] border border-[#C49A3A]/20 rounded-xl p-5 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-[#C49A3A]/15 border border-[#C49A3A]/30 flex items-center justify-center text-[#C49A3A] shrink-0">
-              <Award className="w-6 h-6" />
+          {checkInMsg && (
+            <div className={`mt-3 p-2.5 rounded-lg text-xs font-mono flex items-center gap-2 ${
+              checkInMsg.startsWith('Verified')
+                ? 'bg-emerald-950/40 border border-emerald-500/40 text-emerald-300'
+                : 'bg-amber-950/40 border border-amber-500/40 text-amber-300'
+            }`}>
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>{checkInMsg}</span>
             </div>
-            <div>
-              <span className="font-mono text-[10px] text-[#B5ACA0] uppercase block">AUDITION SHORTLISTED</span>
-              <span className="font-bebas text-3xl sm:text-4xl text-[#C49A3A] leading-none mt-0.5 block">
-                {shortlistedCount}
-              </span>
-            </div>
-          </div>
-
-          <div className="bg-[#0f0e13] border border-[#C49A3A]/20 rounded-xl p-5 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-[#68734A]/15 border border-[#68734A]/30 flex items-center justify-center text-[#68734A] shrink-0">
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="font-mono text-[10px] text-[#B5ACA0] uppercase block">CHECKED IN BACKSTAGE</span>
-              <span className="font-bebas text-3xl sm:text-4xl text-[#68734A] leading-none mt-0.5 block">
-                {checkedInCount} / {totalCount}
-              </span>
-            </div>
-          </div>
-
+          )}
         </div>
 
-        {/* Quick Check-In Bar */}
-        <div className="bg-[#121218] border border-[#C49A3A]/25 rounded-xl p-4 sm:p-5 mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-[#08080a] text-[#C96B35] border border-[#C96B35]/25">
-              <QrCode className="w-5 h-5" />
+        {/* Sound Engineer In-Dashboard Audio Player Bar */}
+        {activeTrack && (
+          <div className="mb-8 p-4 rounded-xl bg-[#14141c] border-2 border-[#C96B35] shadow-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 animate-in slide-in-from-top duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-lg bg-[#C96B35]/20 border border-[#C96B35]/40 flex items-center justify-center text-[#C96B35] shrink-0">
+                <Music className="w-6 h-6" />
+              </div>
+              <div className="overflow-hidden">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-[#C96B35] text-[#F4E7D0]">
+                    SOUND CONSOLE ACTIVE
+                  </span>
+                  <span className="font-mono text-xs text-[#C49A3A] font-bold">{activeTrack.id}</span>
+                </div>
+                <p className="font-bold text-[#F4E7D0] text-sm truncate mt-0.5">
+                  {activeTrack.fullName} — "{activeTrack.performanceName}"
+                </p>
+                <p className="text-[10px] text-[#B5ACA0] font-mono truncate">
+                  Track: {activeTrack.trackFileName || 'Attached MP3 Backing Track'}
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-syne font-bold text-sm text-[#F4E7D0]">Express Candidate Check-In</h3>
-              <p className="text-xs text-[#B5ACA0]">Enter candidate ID (e.g. GT26-1042) or Enrollment No.</p>
+
+            <div className="flex items-center gap-3 self-end sm:self-center">
+              <button
+                onClick={() => playTrack(activeTrack)}
+                className="px-4 py-2 rounded-lg bg-[#C96B35] hover:bg-[#B65A3A] text-[#F4E7D0] text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-colors shadow-lg"
+              >
+                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                <span>{isPlaying ? 'PAUSE TRACK' : 'RESUME'}</span>
+              </button>
+
+              {activeTrack.trackUrl && (
+                <a
+                  href={activeTrack.trackUrl}
+                  download={`${activeTrack.id}_${activeTrack.fullName}_Track.mp3`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-[#F4E7D0] flex items-center gap-1.5 transition-colors"
+                  title="Download Track to Sound Console"
+                >
+                  <Download className="w-3.5 h-3.5 text-[#C49A3A]" />
+                  <span>Download</span>
+                </a>
+              )}
+
+              <button
+                onClick={stopAudio}
+                className="text-xs font-mono text-[#B5ACA0] hover:text-white px-2 py-1"
+              >
+                Close Player
+              </button>
+
+              <audio
+                ref={audioRef}
+                src={activeTrack.trackUrl}
+                onEnded={() => setIsPlaying(false)}
+                className="hidden"
+              />
             </div>
-          </div>
-
-          <form onSubmit={handleQuickCheckIn} className="flex items-center gap-2 w-full md:w-auto">
-            <input
-              type="text"
-              value={quickCheckInId}
-              onChange={(e) => setQuickCheckInId(e.target.value)}
-              placeholder="Candidate ID / Enrollment"
-              className="bg-[#08080a] border border-[#C49A3A]/30 rounded-lg px-3.5 py-2 text-xs font-mono text-[#F4E7D0] focus:outline-none focus:border-[#C96B35] w-full md:w-60"
-            />
-            <button
-              type="submit"
-              className="bg-[#C96B35] hover:bg-[#B65A3A] text-[#F4E7D0] text-xs font-mono font-bold px-4 py-2 rounded-lg whitespace-nowrap uppercase tracking-wider"
-            >
-              CHECK IN
-            </button>
-          </form>
-        </div>
-
-        {checkInMsg && (
-          <div className="mb-6 p-3 rounded-lg bg-[#C49A3A]/10 border border-[#C49A3A]/30 text-xs font-mono text-[#F4E7D0] flex items-center justify-between animate-in fade-in">
-            <span>{checkInMsg}</span>
-            <button onClick={() => setCheckInMsg('')} className="text-xs hover:text-[#C96B35] p-1">✕</button>
           </div>
         )}
 
-        {/* Filters & Search Toolbar */}
-        <div className="bg-[#0f0e13] border border-[#C49A3A]/20 rounded-xl p-4 mb-6 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        {/* Real-Time KPI Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          
+          <div className="p-4 sm:p-5 rounded-xl bg-[#0f0e13] border border-[#C49A3A]/20 shadow-md">
+            <div className="flex items-center justify-between text-[#B5ACA0] text-xs font-mono mb-2">
+              <span>TOTAL CANDIDATES</span>
+              <Users className="w-4 h-4 text-[#C96B35]" />
+            </div>
+            <div className="font-bebas text-3xl sm:text-4xl text-[#F4E7D0]">{totalCount}</div>
+            <div className="text-[10px] text-[#68734A] font-mono mt-1">Logged in Event Roster</div>
+          </div>
+
+          <div className="p-4 sm:p-5 rounded-xl bg-[#0f0e13] border border-[#C49A3A]/20 shadow-md">
+            <div className="flex items-center justify-between text-[#B5ACA0] text-xs font-mono mb-2">
+              <span>CHECKED IN AT GATE</span>
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div className="font-bebas text-3xl sm:text-4xl text-emerald-400">{checkedInCount}</div>
+            <div className="text-[10px] text-[#B5ACA0] font-mono mt-1">
+              {totalCount > 0 ? Math.round((checkedInCount / totalCount) * 100) : 0}% Attendance
+            </div>
+          </div>
+
+          <div className="p-4 sm:p-5 rounded-xl bg-[#0f0e13] border border-[#C49A3A]/20 shadow-md">
+            <div className="flex items-center justify-between text-[#B5ACA0] text-xs font-mono mb-2">
+              <span>AUDIO TRACKS READY</span>
+              <Music className="w-4 h-4 text-[#C49A3A]" />
+            </div>
+            <div className="font-bebas text-3xl sm:text-4xl text-[#C49A3A]">{audioTracksCount}</div>
+            <div className="text-[10px] text-[#B5ACA0] font-mono mt-1">MP3 / Drive Links Attached</div>
+          </div>
+
+          <div className="p-4 sm:p-5 rounded-xl bg-[#0f0e13] border border-[#C49A3A]/20 shadow-md">
+            <div className="flex items-center justify-between text-[#B5ACA0] text-xs font-mono mb-2">
+              <span>SHORTLISTED ACTS</span>
+              <Award className="w-4 h-4 text-[#C96B35]" />
+            </div>
+            <div className="font-bebas text-3xl sm:text-4xl text-[#C96B35]">{shortlistedCount}</div>
+            <div className="text-[10px] text-[#B5ACA0] font-mono mt-1">Advancing to Finale</div>
+          </div>
+
+        </div>
+
+        {/* Filter & Search Bar */}
+        <div className="p-4 rounded-xl bg-[#0f0e13] border border-[#C49A3A]/20 mb-6 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
           
           <div className="relative flex-grow max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#B5ACA0]" />
+            <Search className="w-4 h-4 text-[#B5ACA0] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by name, ID, enrollment, or act..."
-              className="w-full bg-[#08080a] border border-[#C49A3A]/25 rounded-lg pl-10 pr-4 py-2.5 text-xs text-[#F4E7D0] placeholder-[#B5ACA0]/50 focus:outline-none focus:border-[#C96B35]"
+              placeholder="Search by candidate name, enrollment, ID, or act title..."
+              className="w-full bg-[#08080a] border border-[#C49A3A]/20 rounded-lg pl-9 pr-4 py-2 text-xs text-[#F4E7D0] placeholder-[#B5ACA0]/50 focus:outline-none focus:border-[#C96B35]"
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
             <div className="flex items-center gap-2">
               <Filter className="w-3.5 h-3.5 text-[#C49A3A]" />
               <select
@@ -338,6 +478,7 @@ export default function AdminPage() {
                   <th className="py-3.5 px-4">ID</th>
                   <th className="py-3.5 px-4">Candidate & Department</th>
                   <th className="py-3.5 px-4">Act Details</th>
+                  <th className="py-3.5 px-4">Audio Track</th>
                   <th className="py-3.5 px-4">Status</th>
                   <th className="py-3.5 px-4 text-center">Stage Check-In</th>
                   <th className="py-3.5 px-4 text-right">Actions</th>
@@ -360,7 +501,7 @@ export default function AdminPage() {
                         <div className="font-mono text-[11px] text-[#B5ACA0]">
                           {item.enrollmentNo} • {item.schoolDept}
                         </div>
-                        <div className="text-[10px] text-[#B5ACA0]/70 font-mono">
+                        <div className="text-[10px] text-[#B5ACA0]/70 font-mono mt-0.5">
                           Ph: {item.phone}
                         </div>
                       </td>
@@ -376,6 +517,41 @@ export default function AdminPage() {
                             ({item.participationType}, {item.numParticipants} performer)
                           </span>
                         </div>
+                      </td>
+
+                      {/* Audio / Media Track */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        {item.trackUrl ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => playTrack(item)}
+                              className={`px-2.5 py-1 rounded text-[10px] font-mono font-bold flex items-center gap-1.5 transition-colors ${
+                                activeTrack && activeTrack.id === item.id && isPlaying
+                                  ? 'bg-[#C96B35] text-[#F4E7D0]'
+                                  : 'bg-[#C96B35]/20 hover:bg-[#C96B35]/30 text-[#C96B35] border border-[#C96B35]/30'
+                              }`}
+                            >
+                              {activeTrack && activeTrack.id === item.id && isPlaying ? (
+                                <Pause className="w-3 h-3" />
+                              ) : (
+                                <Play className="w-3 h-3" />
+                              )}
+                              <span>{activeTrack && activeTrack.id === item.id && isPlaying ? 'Playing' : 'Play Track'}</span>
+                            </button>
+                          </div>
+                        ) : item.driveLink ? (
+                          <a
+                            href={item.driveLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1 rounded bg-[#C49A3A]/15 hover:bg-[#C49A3A]/25 border border-[#C49A3A]/30 text-[#C49A3A] text-[10px] font-mono font-bold flex items-center gap-1 transition-colors"
+                          >
+                            <span>Drive Audio</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        ) : (
+                          <span className="text-[10px] text-[#B5ACA0]/50 font-mono">No Track</span>
+                        )}
                       </td>
 
                       {/* Status */}
@@ -410,6 +586,17 @@ export default function AdminPage() {
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <div className="inline-flex items-center gap-1.5">
+                          {/* Direct WhatsApp Contact Button */}
+                          <a
+                            href={generateWhatsAppLink(item)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white transition-colors"
+                            title="Message Candidate on WhatsApp"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                          </a>
+
                           <button
                             onClick={() => setSelectedPass(item)}
                             className="p-1.5 rounded bg-white/5 hover:bg-[#C96B35] text-[#F4E7D0] transition-colors"
@@ -417,6 +604,7 @@ export default function AdminPage() {
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
+
                           <button
                             onClick={() => handleDelete(item.id, item.fullName)}
                             className="p-1.5 rounded bg-white/5 hover:bg-red-500 text-[#B5ACA0] hover:text-white transition-colors"
@@ -431,7 +619,7 @@ export default function AdminPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="text-center py-12 text-sm text-[#B5ACA0] font-mono">
+                    <td colSpan="7" className="text-center py-12 text-sm text-[#B5ACA0] font-mono">
                       No matching participants found.
                     </td>
                   </tr>

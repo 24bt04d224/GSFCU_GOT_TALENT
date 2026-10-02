@@ -1,13 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import DigitalPassModal from '../components/DigitalPassModal';
-import { saveRegistration } from '../services/registrationService';
+import { 
+  saveRegistration, 
+  generateWhatsAppLink, 
+  generateEmailLink 
+} from '../services/registrationService';
 import { EVENT_DETAILS, TALENT_CATEGORIES } from '../data/eventData';
 import { 
-  User, Sparkles, ArrowRight, ArrowLeft, MessageSquare, ExternalLink, ShieldCheck, CheckCircle2, QrCode, AlertCircle 
+  User, Sparkles, ArrowRight, ArrowLeft, MessageSquare, ExternalLink, ShieldCheck, 
+  CheckCircle2, QrCode, AlertCircle, Music, Upload, Play, Pause, FileAudio, Mail, Loader2
 } from 'lucide-react';
 
 export default function RegisterPage() {
@@ -17,6 +22,13 @@ export default function RegisterPage() {
   const [passModalOpen, setPassModalOpen] = useState(false);
   const [registeredRecord, setRegisteredRecord] = useState(null);
   const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Audio track upload state
+  const [audioFile, setAudioFile] = useState(null);
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState(null);
+  const [isPlayingPreview, setIsPlayingPreview] = useState(false);
+  const audioRef = useRef(null);
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -30,6 +42,7 @@ export default function RegisterPage() {
     performanceName: '',
     numParticipants: '1',
     description: '',
+    driveLink: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -77,11 +90,52 @@ export default function RegisterPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSubmit = (e) => {
+  const handleAudioSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate size (max 15MB)
+    if (file.size > 15 * 1024 * 1024) {
+      setErrors((prev) => ({
+        ...prev,
+        audioFile: 'File exceeds 15MB limit. Please upload a smaller MP3 or provide your Google Drive link below.'
+      }));
+      return;
+    }
+
+    setAudioFile(file);
+    const objectUrl = URL.createObjectURL(file);
+    setAudioPreviewUrl(objectUrl);
+    setIsPlayingPreview(false);
+    setErrors((prev) => ({ ...prev, audioFile: '' }));
+  };
+
+  const removeAudioFile = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    setAudioFile(null);
+    setAudioPreviewUrl(null);
+    setIsPlayingPreview(false);
+  };
+
+  const toggleAudioPreview = () => {
+    if (!audioRef.current) return;
+    if (isPlayingPreview) {
+      audioRef.current.pause();
+      setIsPlayingPreview(false);
+    } else {
+      audioRef.current.play().catch(() => {});
+      setIsPlayingPreview(true);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError('');
+    setIsSubmitting(true);
     try {
-      const record = saveRegistration(formData);
+      const record = await saveRegistration(formData, audioFile);
       setRegisteredRecord(record);
       setRegistrationId(record.id);
       setSubmitted(true);
@@ -97,10 +151,13 @@ export default function RegisterPage() {
       } catch {}
     } catch (err) {
       setSubmitError(err.message || 'Registration failed. Please check your information.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const resetForm = () => {
+    removeAudioFile();
     setSubmitted(false);
     setRegisteredRecord(null);
     setSubmitError('');
@@ -117,6 +174,7 @@ export default function RegisterPage() {
       performanceName: '',
       numParticipants: '1',
       description: '',
+      driveLink: '',
     });
   };
 
@@ -367,6 +425,106 @@ export default function RegisterPage() {
                     {errors.description && <p className="text-xs text-red-400 mt-1 font-mono">{errors.description}</p>}
                   </div>
 
+                  {/* AUDIO / BACKING TRACK UPLOAD SECTION */}
+                  <div className="p-4 sm:p-5 rounded-xl bg-[#08080a] border border-[#C49A3A]/25 space-y-4">
+                    <div className="flex items-center justify-between border-b border-[#C49A3A]/15 pb-2">
+                      <div className="flex items-center gap-2">
+                        <Music className="w-4 h-4 text-[#C96B35]" />
+                        <span className="font-mono text-xs uppercase font-bold text-[#F4E7D0]">
+                          STAGE AUDIO / BACKING TRACK (OPTIONAL)
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono text-[#B5ACA0]">MP3 / WAV (MAX 15MB)</span>
+                    </div>
+
+                    <p className="text-xs text-[#B5ACA0] font-sans">
+                      Singers, dancers, or skit performers can attach their backing track so sound engineers are prepared ahead of auditions.
+                    </p>
+
+                    {/* File Drop / Select Area */}
+                    {!audioFile ? (
+                      <div>
+                        <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-[#C49A3A]/30 hover:border-[#C96B35] rounded-xl cursor-pointer bg-[#0f0e13] hover:bg-[#C96B35]/5 transition-all text-center group">
+                          <Upload className="w-8 h-8 text-[#C49A3A] group-hover:text-[#C96B35] mb-2 transition-colors" />
+                          <span className="font-mono text-xs text-[#F4E7D0] uppercase font-bold">
+                            Click or Drag Track File Here
+                          </span>
+                          <span className="text-[11px] text-[#B5ACA0] font-sans mt-1">
+                            Supports .mp3, .wav, .m4a, .aac (Up to 15MB)
+                          </span>
+                          <input
+                            type="file"
+                            accept="audio/*"
+                            onChange={handleAudioSelect}
+                            className="hidden"
+                          />
+                        </label>
+                        {errors.audioFile && <p className="text-xs text-red-400 mt-2 font-mono">{errors.audioFile}</p>}
+                      </div>
+                    ) : (
+                      /* Uploaded Audio Preview Card */
+                      <div className="p-3.5 sm:p-4 rounded-lg bg-[#14141c] border border-[#C96B35]/40 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-[#C96B35]/20 flex items-center justify-center text-[#C96B35] shrink-0">
+                            <FileAudio className="w-5 h-5" />
+                          </div>
+                          <div className="overflow-hidden">
+                            <p className="text-xs font-mono font-bold text-[#F4E7D0] truncate max-w-[200px] sm:max-w-[280px]">
+                              {audioFile.name}
+                            </p>
+                            <span className="text-[10px] text-[#68734A] font-mono">
+                              {(audioFile.size / (1024 * 1024)).toFixed(2)} MB • READY FOR STAGE
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {audioPreviewUrl && (
+                            <button
+                              type="button"
+                              onClick={toggleAudioPreview}
+                              className="px-3 py-1.5 rounded bg-[#C49A3A]/20 hover:bg-[#C49A3A]/30 border border-[#C49A3A]/40 text-xs font-mono text-[#F4E7D0] flex items-center gap-1.5 transition-colors"
+                            >
+                              {isPlayingPreview ? <Pause className="w-3.5 h-3.5 text-[#C96B35]" /> : <Play className="w-3.5 h-3.5 text-[#C49A3A]" />}
+                              <span>{isPlayingPreview ? 'Pause' : 'Test Play'}</span>
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={removeAudioFile}
+                            className="text-xs font-mono text-red-400 hover:text-red-300 px-2 py-1 transition-colors"
+                          >
+                            Remove
+                          </button>
+                        </div>
+
+                        {audioPreviewUrl && (
+                          <audio
+                            ref={audioRef}
+                            src={audioPreviewUrl}
+                            onEnded={() => setIsPlayingPreview(false)}
+                            className="hidden"
+                          />
+                        )}
+                      </div>
+                    )}
+
+                    {/* Alternate Google Drive Link */}
+                    <div>
+                      <label className="block text-[11px] font-mono text-[#B5ACA0] uppercase mb-1">
+                        OR GOOGLE DRIVE / CLOUD AUDIO LINK (OPTIONAL)
+                      </label>
+                      <input
+                        type="url"
+                        name="driveLink"
+                        value={formData.driveLink}
+                        onChange={handleChange}
+                        placeholder="https://drive.google.com/file/d/... (ensure link sharing is set to Anyone)"
+                        className="w-full bg-[#0f0e13] border border-[#C49A3A]/20 rounded-lg px-3.5 py-2.5 text-xs text-[#F4E7D0] placeholder-[#B5ACA0]/40 focus:outline-none focus:border-[#C96B35] transition-colors font-mono"
+                      />
+                    </div>
+                  </div>
+
                   <div className="pt-4 sm:pt-6 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
                     <button
                       type="button"
@@ -417,6 +575,22 @@ export default function RegisterPage() {
                       <p><span className="text-[#B5ACA0]">Title:</span> <span className="text-[#C96B35] font-bold">{formData.performanceName}</span></p>
                       <p><span className="text-[#B5ACA0]">Performers:</span> <span className="text-[#F4E7D0] font-mono">{formData.numParticipants} Person(s)</span></p>
                       <p><span className="text-[#B5ACA0]">Description:</span> <span className="text-[#F4E7D0]">{formData.description}</span></p>
+
+                      {(audioFile || formData.driveLink) && (
+                        <div className="pt-2 border-t border-[#C49A3A]/15 mt-2 space-y-1">
+                          <span className="text-[#B5ACA0] block">Audio / Backing Track:</span>
+                          {audioFile && (
+                            <p className="font-mono text-[#68734A] flex items-center gap-1.5">
+                              <FileAudio className="w-3.5 h-3.5" /> {audioFile.name} (Attached)
+                            </p>
+                          )}
+                          {formData.driveLink && (
+                            <p className="font-mono text-xs text-[#C49A3A] truncate">
+                              Cloud Link: {formData.driveLink}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -434,16 +608,24 @@ export default function RegisterPage() {
                     <button
                       type="button"
                       onClick={handleBack}
-                      className="px-6 py-3 rounded-md border border-[#C49A3A]/25 text-xs font-mono text-[#B5ACA0] hover:text-[#F4E7D0] uppercase transition-colors min-h-[44px] flex items-center justify-center"
+                      disabled={isSubmitting}
+                      className="px-6 py-3 rounded-md border border-[#C49A3A]/25 text-xs font-mono text-[#B5ACA0] hover:text-[#F4E7D0] uppercase transition-colors min-h-[44px] flex items-center justify-center disabled:opacity-50"
                     >
                       ← Back
                     </button>
                     <button
                       type="button"
                       onClick={handleSubmit}
-                      className="bg-[#C96B35] hover:bg-[#B65A3A] text-[#F4E7D0] font-mono font-bold text-xs uppercase tracking-wider px-8 py-3.5 rounded-md shadow-xl flex items-center justify-center gap-2 transition-all border border-[#C96B35] hover:border-[#B65A3A] min-h-[44px]"
+                      disabled={isSubmitting}
+                      className="bg-[#C96B35] hover:bg-[#B65A3A] text-[#F4E7D0] font-mono font-bold text-xs uppercase tracking-wider px-8 py-3.5 rounded-md shadow-xl flex items-center justify-center gap-2 transition-all border border-[#C96B35] hover:border-[#B65A3A] min-h-[44px] disabled:opacity-50"
                     >
-                      SUBMIT REGISTRATION →
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" /> SUBMITTING TO CLOUD...
+                        </>
+                      ) : (
+                        'SUBMIT REGISTRATION →'
+                      )}
                     </button>
                   </div>
                 </div>
@@ -495,6 +677,39 @@ export default function RegisterPage() {
                   <QrCode className="w-4 h-4" /> VIEW OFFICIAL DIGITAL PASS & QR TICKET
                 </button>
               </div>
+
+              {/* Instant WhatsApp & Email Confirmation Notifications */}
+              {registeredRecord && (
+                <div className="max-w-md mx-auto mb-6 sm:mb-8 grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+                  <a
+                    href={generateWhatsAppLink(registeredRecord)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-3.5 rounded-xl bg-[#0f1712] border border-emerald-500/30 hover:border-emerald-500/60 flex items-center gap-3 transition-colors group"
+                  >
+                    <div className="w-9 h-9 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                      <MessageSquare className="w-4 h-4" />
+                    </div>
+                    <div className="overflow-hidden">
+                      <span className="text-[10px] font-mono text-emerald-400 uppercase font-bold block">SEND TO WHATSAPP</span>
+                      <span className="text-[11px] text-[#B5ACA0] block truncate">Backup ID on phone</span>
+                    </div>
+                  </a>
+
+                  <a
+                    href={generateEmailLink(registeredRecord)}
+                    className="p-3.5 rounded-xl bg-[#14141c] border border-[#C49A3A]/30 hover:border-[#C49A3A]/60 flex items-center gap-3 transition-colors group"
+                  >
+                    <div className="w-9 h-9 rounded-full bg-[#C49A3A]/20 flex items-center justify-center text-[#C49A3A] shrink-0">
+                      <Mail className="w-4 h-4" />
+                    </div>
+                    <div className="overflow-hidden">
+                      <span className="text-[10px] font-mono text-[#C49A3A] uppercase font-bold block">SAVE VIA EMAIL</span>
+                      <span className="text-[11px] text-[#B5ACA0] block truncate">Send copy to inbox</span>
+                    </div>
+                  </a>
+                </div>
+              )}
 
               {/* WhatsApp Callout */}
               <div className="p-4 sm:p-6 rounded-xl bg-[#0f1712] border border-emerald-500/30 mb-6 sm:mb-8 max-w-md mx-auto text-left">

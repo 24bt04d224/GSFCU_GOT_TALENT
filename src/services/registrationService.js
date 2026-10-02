@@ -1,7 +1,12 @@
 /**
  * GSFCU Got Talent 2026 - Registration & Data Persistence Service
- * Supports localStorage persistence with cloud sync architecture (Supabase / Firebase ready).
+ * Supports dual-engine operation:
+ *  1. Supabase Cloud PostgreSQL & Audio Bucket (when VITE_SUPABASE_URL and KEY are set)
+ *  2. LocalStorage Persistence Fallback (zero configuration mode)
  */
+
+import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { EVENT_DETAILS } from '../data/eventData';
 
 const STORAGE_KEY = 'gsfcu_got_talent_2026_registrations';
 
@@ -23,6 +28,9 @@ const SAMPLE_REGISTRATIONS = [
     status: "Shortlisted for Auditions",
     checkedIn: true,
     slotTime: "22 Oct 2026 • 10:00 AM",
+    trackUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    trackFileName: "Aarav_Tanpura_Backing_Track.mp3",
+    driveLink: "",
     registeredAt: "2026-10-01T14:20:00Z"
   },
   {
@@ -41,6 +49,9 @@ const SAMPLE_REGISTRATIONS = [
     status: "Shortlisted for Auditions",
     checkedIn: false,
     slotTime: "22 Oct 2026 • 10:45 AM",
+    trackUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    trackFileName: "Garba_Fusion_Mix_Final.mp3",
+    driveLink: "https://drive.google.com/drive/folders/sample-dance-track",
     registeredAt: "2026-10-01T16:45:00Z"
   },
   {
@@ -59,6 +70,9 @@ const SAMPLE_REGISTRATIONS = [
     status: "Registered",
     checkedIn: false,
     slotTime: "22 Oct 2026 • 11:30 AM",
+    trackUrl: "",
+    trackFileName: "",
+    driveLink: "",
     registeredAt: "2026-10-02T09:15:00Z"
   },
   {
@@ -77,6 +91,9 @@ const SAMPLE_REGISTRATIONS = [
     status: "Registered",
     checkedIn: false,
     slotTime: "22 Oct 2026 • 01:15 PM",
+    trackUrl: "",
+    trackFileName: "",
+    driveLink: "https://drive.google.com/file/d/sample-drama-bgm/view",
     registeredAt: "2026-10-02T11:30:00Z"
   },
   {
@@ -95,6 +112,9 @@ const SAMPLE_REGISTRATIONS = [
     status: "Shortlisted for Auditions",
     checkedIn: true,
     slotTime: "22 Oct 2026 • 02:00 PM",
+    trackUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+    trackFileName: "Acoustic_Click_Track.mp3",
+    driveLink: "",
     registeredAt: "2026-10-02T13:00:00Z"
   }
 ];
@@ -112,28 +132,174 @@ export const getRegistrations = () => {
   }
 };
 
-export const saveRegistration = (data) => {
+/**
+ * Fetch registrations from Supabase Cloud (if connected), else fallback to localStorage
+ */
+export const fetchRegistrationsFromCloud = async () => {
+  if (!isSupabaseConfigured() || !supabase) {
+    return getRegistrations();
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('registrations')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.warn("Supabase query error, using local fallback:", error);
+      return getRegistrations();
+    }
+
+    if (data && data.length > 0) {
+      const mapped = data.map((row) => ({
+        id: row.id,
+        fullName: row.full_name,
+        enrollmentNo: row.enrollment_no,
+        schoolDept: row.school_dept,
+        semester: row.semester,
+        phone: row.phone,
+        email: row.email,
+        category: row.category,
+        participationType: row.participation_type,
+        performanceName: row.performance_name,
+        numParticipants: row.num_participants,
+        description: row.description,
+        trackUrl: row.track_url || '',
+        trackFileName: row.track_file_name || '',
+        driveLink: row.drive_link || '',
+        status: row.status,
+        checkedIn: Boolean(row.checked_in),
+        slotTime: "22 Oct 2026 • TBA",
+        registeredAt: row.created_at
+      }));
+
+      // Cache locally
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(mapped));
+      return mapped;
+    }
+
+    return getRegistrations();
+  } catch (err) {
+    console.warn("Could not sync from Supabase, using local fallback:", err);
+    return getRegistrations();
+  }
+};
+
+/**
+ * Upload Audio File to Supabase Storage or create client-side Blob URL
+ */
+export const uploadAudioTrack = async (file, candidateId) => {
+  if (!file) return { url: '', fileName: '' };
+
+  const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+  if (isSupabaseConfigured() && supabase) {
+    try {
+      const filePath = `${candidateId}/${Date.now()}_${sanitizedFileName}`;
+      const { error: uploadError } = await supabase.storage
+        .from('audio-tracks')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (!uploadError) {
+        const { data: publicUrlData } = supabase.storage
+          .from('audio-tracks')
+          .getPublicUrl(filePath);
+
+        return {
+          url: publicUrlData.publicUrl,
+          fileName: sanitizedFileName
+        };
+      }
+      console.warn("Supabase storage upload error:", uploadError);
+    } catch (e) {
+      console.warn("Storage upload exception:", e);
+    }
+  }
+
+  // Local fallback: create Blob URL
+  const localUrl = URL.createObjectURL(file);
+  return {
+    url: localUrl,
+    fileName: sanitizedFileName
+  };
+};
+
+/**
+ * Save Registration (Dual Engine: Supabase Cloud + LocalStorage)
+ */
+export const saveRegistration = async (data, audioFile = null) => {
   const current = getRegistrations();
-  
-  // Check if enrollment number is already registered
+
+  // Duplicate Check
   const existing = current.find(
     (item) => item.enrollmentNo.toLowerCase().trim() === data.enrollmentNo.toLowerCase().trim()
   );
 
   if (existing) {
-    throw new Error(`Enrollment number ${data.enrollmentNo} is already registered under ID ${existing.id}. Duplicate entries are not permitted.`);
+    throw new Error(`Enrollment number ${data.enrollmentNo} is already registered under ID ${existing.id}.`);
   }
 
   const randomNum = Math.floor(1000 + Math.random() * 9000);
+  const newId = `GT26-${randomNum}`;
+
+  let trackUrl = data.trackUrl || '';
+  let trackFileName = data.trackFileName || '';
+
+  if (audioFile) {
+    const uploaded = await uploadAudioTrack(audioFile, newId);
+    trackUrl = uploaded.url;
+    trackFileName = uploaded.fileName;
+  }
+
   const newRegistration = {
     ...data,
-    id: `GT26-${randomNum}`,
+    id: newId,
+    trackUrl,
+    trackFileName,
+    driveLink: data.driveLink || '',
     status: "Registered",
     checkedIn: false,
     slotTime: "22 Oct 2026 • TBA",
     registeredAt: new Date().toISOString()
   };
 
+  // 1. Save to Supabase if configured
+  if (isSupabaseConfigured() && supabase) {
+    try {
+      const { error } = await supabase.from('registrations').insert({
+        id: newRegistration.id,
+        full_name: newRegistration.fullName,
+        enrollment_no: newRegistration.enrollmentNo,
+        school_dept: newRegistration.schoolDept,
+        semester: newRegistration.semester,
+        phone: newRegistration.phone,
+        email: newRegistration.email,
+        category: newRegistration.category,
+        participation_type: newRegistration.participationType,
+        performance_name: newRegistration.performanceName,
+        num_participants: newRegistration.numParticipants,
+        description: newRegistration.description,
+        track_url: newRegistration.trackUrl,
+        track_file_name: newRegistration.trackFileName,
+        drive_link: newRegistration.driveLink,
+        status: newRegistration.status,
+        checked_in: newRegistration.checkedIn,
+        created_at: newRegistration.registeredAt
+      });
+
+      if (error) {
+        console.warn("Supabase insert error (saving locally instead):", error);
+      }
+    } catch (e) {
+      console.warn("Supabase cloud insert exception:", e);
+    }
+  }
+
+  // 2. Always persist locally
   const updated = [newRegistration, ...current];
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
@@ -144,31 +310,126 @@ export const saveRegistration = (data) => {
   return newRegistration;
 };
 
-export const updateRegistrationStatus = (id, newStatus) => {
+export const updateRegistrationStatus = async (id, newStatus) => {
   const current = getRegistrations();
   const updated = current.map((item) =>
     item.id === id ? { ...item, status: newStatus } : item
   );
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+  if (isSupabaseConfigured() && supabase) {
+    try {
+      await supabase.from('registrations').update({ status: newStatus }).eq('id', id);
+    } catch (e) {
+      console.warn("Supabase status update exception:", e);
+    }
+  }
+
   return updated;
 };
 
-export const toggleCheckInStatus = (id) => {
+export const toggleCheckInStatus = async (id) => {
   const current = getRegistrations();
+  const target = current.find((item) => item.id === id);
+  const newCheckedIn = target ? !target.checkedIn : true;
+
   const updated = current.map((item) =>
-    item.id === id ? { ...item, checkedIn: !item.checkedIn } : item
+    item.id === id ? { ...item, checkedIn: newCheckedIn } : item
   );
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+  if (isSupabaseConfigured() && supabase) {
+    try {
+      await supabase.from('registrations').update({ checked_in: newCheckedIn }).eq('id', id);
+    } catch (e) {
+      console.warn("Supabase check-in update exception:", e);
+    }
+  }
+
   return updated;
 };
 
-export const deleteRegistration = (id) => {
+export const deleteRegistration = async (id) => {
   const current = getRegistrations();
   const updated = current.filter((item) => item.id !== id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+  if (isSupabaseConfigured() && supabase) {
+    try {
+      await supabase.from('registrations').delete().eq('id', id);
+    } catch (e) {
+      console.warn("Supabase delete exception:", e);
+    }
+  }
+
   return updated;
 };
 
+/**
+ * Generate Direct WhatsApp Confirmation / Alert URL
+ */
+export const generateWhatsAppLink = (candidate, customMessage = null) => {
+  if (!candidate) return '#';
+  const cleanPhone = candidate.phone ? candidate.phone.replace(/[^0-9]/g, '') : '';
+  const phoneParam = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+
+  const text = customMessage || 
+`🌟 *GSFCU GOT TALENT 2026 — REGISTRATION CONFIRMATION* 🌟
+
+Hello *${candidate.fullName}*,
+Your audition registration for *GSFCU GOT TALENT 2026* has been officially received!
+
+🎫 *Registration ID*: ${candidate.id}
+🎭 *Category*: ${candidate.category.toUpperCase()} (${candidate.participationType})
+🎵 *Act Title*: ${candidate.performanceName}
+🏢 *Department*: ${candidate.schoolDept}
+📍 *Audition Venue*: ${EVENT_DETAILS.location}
+📅 *Audition Date*: 22 October 2026
+
+⚠️ *Backstage Instructions*:
+1. Please report 20 minutes prior to your time slot with your digital pass.
+2. If using backing audio tracks, verify it at the Sound Console desk.
+
+Official Portal: https://maanpatel8436.github.io/GSFCU_GOT_TALENT/
+Best of luck, and make the stage yours!`;
+
+  return `https://wa.me/${phoneParam}?text=${encodeURIComponent(text)}`;
+};
+
+/**
+ * Generate Direct Email Confirmation Link
+ */
+export const generateEmailLink = (candidate) => {
+  if (!candidate || !candidate.email) return '#';
+  const subject = `Registration Confirmed: ${candidate.id} — GSFCU Got Talent 2026`;
+  const body = 
+`Dear ${candidate.fullName},
+
+Congratulations! Your official registration for GSFCU GOT TALENT 2026 (Navratri Special Edition) has been recorded.
+
+REGISTRATION SUMMARY:
+------------------------------------------
+• Registration ID : ${candidate.id}
+• Candidate Name  : ${candidate.fullName}
+• Enrollment No   : ${candidate.enrollmentNo}
+• Category        : ${candidate.category.toUpperCase()} (${candidate.participationType})
+• Performance     : "${candidate.performanceName}"
+• Department      : ${candidate.schoolDept}
+• Date & Venue    : 22 October 2026 at ${EVENT_DETAILS.location}
+
+Please keep your digital pass and QR code ticket ready on your mobile device during entry.
+
+Warm regards,
+Organizing Committee
+GSFC University Got Talent 2026
+Contact: ${EVENT_DETAILS.contactEmail}`;
+
+  return `mailto:${candidate.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+};
+
+/**
+ * Export Registrations to CSV Call Sheet
+ */
 export const exportRegistrationsCSV = () => {
   const data = getRegistrations();
   if (!data || data.length === 0) return;
@@ -185,6 +446,9 @@ export const exportRegistrationsCSV = () => {
     "Format",
     "Performance Title",
     "Performers Count",
+    "Audio Track URL",
+    "Audio Track File",
+    "Drive Link",
     "Status",
     "Checked In",
     "Slot Time",
@@ -203,6 +467,9 @@ export const exportRegistrationsCSV = () => {
     `"${item.participationType}"`,
     `"${item.performanceName.replace(/"/g, '""')}"`,
     item.numParticipants,
+    `"${item.trackUrl || ''}"`,
+    `"${item.trackFileName || ''}"`,
+    `"${item.driveLink || ''}"`,
     `"${item.status}"`,
     item.checkedIn ? "YES" : "NO",
     `"${item.slotTime || 'TBA'}"`,
