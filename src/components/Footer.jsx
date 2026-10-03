@@ -81,7 +81,7 @@ export default function Footer() {
               <a href="#rules" className="hover:text-[#C96B35] transition-colors py-1 min-h-[36px] flex items-center">Rules</a>
               <a href="#faq" className="hover:text-[#C96B35] transition-colors py-1 min-h-[36px] flex items-center">FAQ</a>
               <Link to="/register" className="text-[#C96B35] font-semibold hover:underline py-1 min-h-[36px] flex items-center">Register Now</Link>
-              <Link to="/admin?unlock=true" className="text-[#C49A3A] hover:text-[#C96B35] transition-colors py-1 min-h-[36px] flex items-center">Organizer Portal</Link>
+              <Link to="/admin" className="text-[#C49A3A] hover:text-[#C96B35] transition-colors py-1 min-h-[36px] flex items-center">Organizer Portal</Link>
             </div>
             
             <div className="pt-2 sm:pt-4">
@@ -102,7 +102,7 @@ export default function Footer() {
           <div className="flex items-center gap-4">
             <span className="font-mono text-[#B5ACA0]">GSFCU GOT TALENT 2026</span>
             <span>•</span>
-            <Link to="/admin?unlock=true" className="font-mono text-[#C49A3A] hover:text-[#C96B35] transition-colors">
+            <Link to="/admin" className="font-mono text-[#C49A3A] hover:text-[#C96B35] transition-colors">
               ORGANIZER DASHBOARD 🔒
             </Link>
           </div>

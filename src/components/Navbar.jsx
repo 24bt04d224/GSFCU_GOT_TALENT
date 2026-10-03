@@ -90,7 +90,7 @@ export default function Navbar() {
             </a>
           ))}
           <Link
-            to="/admin?unlock=true"
+            to="/admin"
             className="text-xs font-mono tracking-widest text-[#C49A3A] hover:text-[#C96B35] uppercase transition-colors relative group py-1"
           >
             PORTAL 🔒
@@ -141,7 +141,7 @@ export default function Navbar() {
                 </a>
               ))}
               <Link
-                to="/admin?unlock=true"
+                to="/admin"
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-xs font-mono tracking-widest text-[#C49A3A] hover:text-[#C96B35] uppercase transition-colors py-3 border-b border-[#C49A3A]/15 flex items-center justify-between min-h-[44px]"
               >
