@@ -30,9 +30,9 @@ import {
 
 } from '../services/registrationService';
 import {
-  Users, CheckCircle2, Award, Download, Search, Filter,
+  Users, CheckCircle2, Award, Download, Search,
   Lock, QrCode, Trash2, Eye, RefreshCw, Music,
-  Play, Pause, ExternalLink, MessageSquare, Database, LogOut, Plus, Edit2, X, Check, User, Building2,
+  Play, Pause, ExternalLink, MessageSquare, Database, LogOut, Plus, Edit2, X, User, Building2,
   FileText, Upload, Camera
 } from 'lucide-react';
 
@@ -74,8 +74,6 @@ export default function AdminPage() {
 
   // Brochure Management State (Requirement 5)
   const [brochure, setBrochure] = useState(() => getBrochure());
-  const [isUploadingBrochure, setIsUploadingBrochure] = useState(false);
-  const [brochureMsg, setBrochureMsg] = useState('');
 
   const [sponsorForm, setSponsorForm] = useState({
     name: '',

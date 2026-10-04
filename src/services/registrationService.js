@@ -57,7 +57,7 @@ export const fetchRegistrationsFromCloud = async () => {
           if (row.team_members) {
             try {
               parsedMembers = typeof row.team_members === 'string' ? JSON.parse(row.team_members) : row.team_members;
-            } catch (e) {
+            } catch {
               parsedMembers = [];
             }
           }

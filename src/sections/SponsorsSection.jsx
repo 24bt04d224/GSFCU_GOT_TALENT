@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Handshake, Building2, FileText, ExternalLink } from 'lucide-react';
+import { Handshake, Building2, FileText } from 'lucide-react';
 import SponsorEnquiryModal from '../components/SponsorEnquiryModal';
 import { getSponsors, fetchSponsorsFromCloud, getBrochure, fetchBrochureFromCloud } from '../services/registrationService';
 

@@ -1,10 +1,25 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   X, Camera, QrCode, CheckCircle2, AlertTriangle, AlertCircle, 
-  RotateCcw, ShieldCheck, User, Users, Clock, ArrowRight, RefreshCw, Volume2
+  RotateCcw, RefreshCw
 } from 'lucide-react';
 import { processQrCheckIn } from '../services/registrationService';
+
+function playFeedbackSound() {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime); // 880Hz A5 note
+    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.15);
+  } catch {}
+}
 
 export default function CheckInScannerModal({ isOpen, onClose, onCheckInComplete }) {
   const [cameraState, setCameraState] = useState('initializing'); // 'initializing' | 'active' | 'error'
@@ -15,33 +30,7 @@ export default function CheckInScannerModal({ isOpen, onClose, onCheckInComplete
   const scannerRef = useRef(null);
   const isComponentMounted = useRef(true);
 
-  useEffect(() => {
-    isComponentMounted.current = true;
-    if (!isOpen) {
-      cleanupScanner();
-      setScanResult(null);
-      return;
-    }
-
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen) {
-        cleanupScanner();
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-
-    startScanner();
-
-    return () => {
-      isComponentMounted.current = false;
-      window.removeEventListener('keydown', handleKeyDown);
-      cleanupScanner();
-    };
-  }, [isOpen]);
-
-
-  const cleanupScanner = async () => {
+  const cleanupScanner = useCallback(async () => {
     if (scannerRef.current) {
       try {
         if (scannerRef.current.isScanning) {
@@ -54,9 +43,44 @@ export default function CheckInScannerModal({ isOpen, onClose, onCheckInComplete
         scannerRef.current = null;
       }
     }
-  };
+  }, []);
 
-  const startScanner = async () => {
+  const handleQrScanSuccess = useCallback(async (decodedText) => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+
+    // Pause scanner scanning temporarily while showing result
+    if (scannerRef.current && scannerRef.current.isScanning) {
+      try {
+        await scannerRef.current.pause(true);
+      } catch {}
+    }
+
+    try {
+      playFeedbackSound();
+
+      const result = await processQrCheckIn(decodedText);
+      setScanResult(result);
+
+      if (result.status === 'SUCCESS' && onCheckInComplete) {
+        onCheckInComplete(result.allRegistrations, result);
+      }
+    } catch (e) {
+      console.error("Scan processing error:", e);
+      setScanResult({
+        status: 'INVALID_QR',
+        message: 'An error occurred while processing the QR code.'
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [isProcessing, onCheckInComplete]);
+
+  const handleQrScanError = useCallback(() => {
+    // Non-critical frame-by-frame scanning noise, ignore
+  }, []);
+
+  const startScanner = useCallback(async () => {
     setCameraState('initializing');
     setCameraErrorMessage('');
     await cleanupScanner();
@@ -68,6 +92,8 @@ export default function CheckInScannerModal({ isOpen, onClose, onCheckInComplete
     if (!element) return;
 
     try {
+      // Dynamic import to code-split html5-qrcode
+      const { Html5Qrcode } = await import('html5-qrcode');
       const html5Qrcode = new Html5Qrcode('qr-reader-viewfinder');
       scannerRef.current = html5Qrcode;
 
@@ -120,43 +146,32 @@ export default function CheckInScannerModal({ isOpen, onClose, onCheckInComplete
         }
       }
     }
-  };
+  }, [cleanupScanner, handleQrScanSuccess, handleQrScanError]);
 
-  const handleQrScanSuccess = async (decodedText) => {
-    if (isProcessing) return;
-    setIsProcessing(true);
-
-    // Pause scanner scanning temporarily while showing result
-    if (scannerRef.current && scannerRef.current.isScanning) {
-      try {
-        await scannerRef.current.pause(true);
-      } catch {}
+  useEffect(() => {
+    isComponentMounted.current = true;
+    if (!isOpen) {
+      cleanupScanner();
+      setScanResult(null);
+      return;
     }
 
-    try {
-      // Audio feedback / beep synthesis
-      playFeedbackSound();
-
-      const result = await processQrCheckIn(decodedText);
-      setScanResult(result);
-
-      if (result.status === 'SUCCESS' && onCheckInComplete) {
-        onCheckInComplete(result.allRegistrations, result);
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        cleanupScanner();
+        onClose();
       }
-    } catch (e) {
-      console.error("Scan processing error:", e);
-      setScanResult({
-        status: 'INVALID_QR',
-        message: 'An error occurred while processing the QR code.'
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+    };
+    window.addEventListener('keydown', handleKeyDown);
 
-  const handleQrScanError = () => {
-    // Non-critical frame-by-frame scanning noise, ignore
-  };
+    startScanner();
+
+    return () => {
+      isComponentMounted.current = false;
+      window.removeEventListener('keydown', handleKeyDown);
+      cleanupScanner();
+    };
+  }, [isOpen, cleanupScanner, startScanner, onClose]);
 
   const handleManualCheckIn = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -192,22 +207,6 @@ export default function CheckInScannerModal({ isOpen, onClose, onCheckInComplete
     } else {
       startScanner();
     }
-  };
-
-  const playFeedbackSound = () => {
-    try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, audioCtx.currentTime); // 880Hz A5 note
-      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.15);
-    } catch {}
   };
 
   if (!isOpen) return null;

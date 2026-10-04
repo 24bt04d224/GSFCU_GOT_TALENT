@@ -9,7 +9,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { canAccessPortal, loading } = useAuth();
+  const { canAccessPortal } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,7 +60,6 @@ export default function Navbar() {
     }
   };
 
-  const isPortalRoute = location.pathname.startsWith('/admin') || location.pathname.startsWith('/portal');
   const isHomePage = location.pathname === '/';
   const isTransparent = isHomePage && !scrolled;
 
@@ -110,12 +109,20 @@ export default function Navbar() {
           ))}
         </nav>
 
-        {/* Far Right: Rectangular orange button */}
-        <div className="hidden md:flex items-center">
+        {/* Far Right: Actions */}
+        <div className="hidden md:flex items-center gap-3">
+          {canAccessPortal && (
+            <Link
+              to="/portal"
+              className="rounded bg-black/40 hover:bg-black/60 px-3.5 py-2 text-xs font-mono font-bold tracking-widest text-[#E86F2D] uppercase transition-all duration-200 flex items-center gap-1.5 border border-[#E86F2D]/50"
+            >
+              <Lock className="w-3 h-3" />
+              <span>PORTAL</span>
+            </Link>
+          )}
           <Link
             to="/register"
             className="group relative overflow-hidden rounded bg-[#E86F2D] hover:bg-[#d05e1f] px-5 py-2.5 text-xs font-mono font-bold tracking-widest text-[#F1E8D8] uppercase transition-all duration-200 flex items-center gap-2 border border-[#E86F2D] hover:scale-[1.02] active:scale-[0.98]"
-
           >
             <span>REGISTER NOW</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />

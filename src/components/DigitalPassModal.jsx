@@ -1,8 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { X, Printer, Download, Sparkles, Calendar, MapPin, ShieldCheck, Loader2, MessageSquare, ExternalLink } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import { EVENT_DETAILS } from '../data/eventData';
 
 export default function DigitalPassModal({ registration, onClose, isOpen = true }) {
@@ -21,8 +19,6 @@ export default function DigitalPassModal({ registration, onClose, isOpen = true 
 
   if (!registration || isOpen === false) return null;
 
-
-
   const handlePrint = () => {
     window.print();
   };
@@ -32,6 +28,12 @@ export default function DigitalPassModal({ registration, onClose, isOpen = true 
     setIsExportingPdf(true);
 
     try {
+      // Dynamic import to code-split jspdf and html2canvas
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf')
+      ]);
+
       // Wait for fonts and visual assets to complete rendering
       if (document?.fonts) {
         await document.fonts.ready;

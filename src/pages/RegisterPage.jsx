@@ -9,7 +9,7 @@ import {
   generateWhatsAppLink, 
   generateEmailLink 
 } from '../services/registrationService';
-import { EVENT_DETAILS, TALENT_CATEGORIES } from '../data/eventData';
+import { TALENT_CATEGORIES } from '../data/eventData';
 import { 
   User, Sparkles, ArrowRight, ArrowLeft, MessageSquare, ExternalLink, ShieldCheck, 
   CheckCircle2, QrCode, AlertCircle, Music, Upload, Play, Pause, FileAudio, Mail, Loader2, Plus, Trash2, Users

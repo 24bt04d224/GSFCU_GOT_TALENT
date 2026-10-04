@@ -136,16 +136,23 @@ export default function Footer() {
 
           <div className="flex items-center gap-3">
             <span className="font-mono text-[#C9C5BD]/80">GSFCU GOT TALENT 2026</span>
-            {!loading && canAccessPortal && (
-              <>
-                <span className="text-[#3A3029]">•</span>
-                <Link
-                  to="/portal"
-                  className="font-mono text-[#E86F2D] hover:underline flex items-center gap-1"
-                >
-                  <span>ORGANIZER DASHBOARD 🔒</span>
-                </Link>
-              </>
+            <span className="text-[#3A3029]">•</span>
+            {!loading && canAccessPortal ? (
+              <Link
+                to="/portal"
+                className="font-mono text-[#E86F2D] hover:underline flex items-center gap-1"
+              >
+                <span>ORGANIZER DASHBOARD 🔒</span>
+              </Link>
+            ) : (
+              <Link
+                to="/portal"
+                className="font-mono text-[#C9C5BD]/60 hover:text-[#E86F2D] transition-colors flex items-center gap-1"
+                title="Committee & Stage Control Login"
+              >
+                <Lock className="w-3 h-3" />
+                <span>COMMITTEE LOGIN</span>
+              </Link>
             )}
           </div>
         </div>

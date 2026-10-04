@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-export function useScrollReveal(dependencyArray = []) {
+export function useScrollReveal() {
   useEffect(() => {
     // Respect prefers-reduced-motion for accessibility
     if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -36,5 +36,5 @@ export function useScrollReveal(dependencyArray = []) {
       clearTimeout(timer);
       observer.disconnect();
     };
-  }, dependencyArray);
+  }, []);
 }
