@@ -1,11 +1,8 @@
 @import "tailwindcss";
 
 :root {
-<<<<<<< HEAD
-=======
   --navbar-height: 80px;
 
->>>>>>> 5d886f7 (Updated Changes)
   /* Physical Event Decoration Palette */
   --terracotta: #B65A3A;
   --rust-orange: #C96B35;
@@ -109,8 +106,6 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #C96B35;
 }
-<<<<<<< HEAD
-=======
 
 /* Print & PDF Single-Page Isolation Rules */
 @media print {
@@ -338,4 +333,3 @@ body {
   }
 }
 
->>>>>>> 5d886f7 (Updated Changes)

@@ -78,11 +78,8 @@ export default function CategoriesSection() {
       <div className="max-w-7xl mx-auto">
         
         {/* Section Header */}
-<<<<<<< HEAD
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 sm:mb-16 gap-6 border-b border-[#C49A3A]/15 pb-8 sm:pb-10">
-=======
         <div data-reveal className="flex flex-col md:flex-row md:items-end justify-between mb-10 sm:mb-16 gap-6 border-b border-[#C49A3A]/15 pb-8 sm:pb-10">
->>>>>>> 5d886f7 (Updated Changes)
+
           <div>
             <div className="flex items-center gap-3 mb-2">
               <span className="w-8 h-[2px] bg-[#C96B35]" />
@@ -107,26 +104,19 @@ export default function CategoriesSection() {
 
         {/* 2-Column Grid of 6 Large Horizontal Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-<<<<<<< HEAD
-          {CATEGORIES_DATA.map((cat) => {
-=======
           {CATEGORIES_DATA.map((cat, index) => {
->>>>>>> 5d886f7 (Updated Changes)
+
             const IconComponent = cat.icon;
 
             return (
               <div
                 key={cat.id}
-<<<<<<< HEAD
-                className="group relative bg-[#0f0e13] border border-[#C49A3A]/20 hover:border-[#C96B35]/50 rounded-xl sm:rounded-2xl overflow-hidden shadow-xl shadow-black/40 hover:shadow-[#C96B35]/10 transition-all duration-300 flex flex-row items-stretch min-h-[220px] xs:min-h-[240px] sm:min-h-[260px]"
-              >
-=======
                 data-reveal
                 data-reveal-delay={String((index % 2) + 1)}
                 className="group relative hover-lift bg-[#0f0e13] border border-[#C49A3A]/20 hover:border-[#C96B35]/50 rounded-xl sm:rounded-2xl overflow-hidden shadow-xl shadow-black/40 hover:shadow-[#C96B35]/10 transition-all duration-300 flex flex-row items-stretch min-h-[220px] xs:min-h-[240px] sm:min-h-[260px]"
               >
 
->>>>>>> 5d886f7 (Updated Changes)
+
                 {/* Left Content Area (62% width) */}
                 <div className="w-[62%] xs:w-[65%] p-4 xs:p-5 sm:p-6 flex flex-col justify-between z-10 bg-gradient-to-r from-[#0f0e13] via-[#0f0e13] to-[#0f0e13]/90">
                   <div>

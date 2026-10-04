@@ -22,11 +22,9 @@ const SAMPLE_REGISTRATIONS = [
     email: "aarav.s23@gsfcuniversity.ac.in",
     category: "singing",
     participationType: "Solo",
-<<<<<<< HEAD
-=======
     participationFormat: "solo",
     teamMembers: [],
->>>>>>> 5d886f7 (Updated Changes)
+
     performanceName: "Raag Bhairavi Classical & Bollywood Fusion",
     numParticipants: "1",
     description: "Semi-classical vocal performance with electronic tanpura backing track.",
@@ -47,10 +45,6 @@ const SAMPLE_REGISTRATIONS = [
     phone: "9823456781",
     email: "diya.v22@gsfcuniversity.ac.in",
     category: "dance",
-<<<<<<< HEAD
-    participationType: "Group",
-    performanceName: "Navratri Garba Beats & Contemporary Hip-Hop",
-=======
     participationType: "Team",
     participationFormat: "team",
     teamMembers: [
@@ -61,7 +55,7 @@ const SAMPLE_REGISTRATIONS = [
       { name: "Anjali Parmar", enrollmentNumber: "220202120" }
     ],
     performanceName: "Garba Beats & Contemporary Hip-Hop",
->>>>>>> 5d886f7 (Updated Changes)
+
     numParticipants: "6",
     description: "High-energy Garba fusion routine with traditional Gujarati chaniya choli and modern street formations.",
     status: "Shortlisted for Auditions",
@@ -82,11 +76,9 @@ const SAMPLE_REGISTRATIONS = [
     email: "rohan.t24@gsfcuniversity.ac.in",
     category: "comedy",
     participationType: "Solo",
-<<<<<<< HEAD
-=======
     participationFormat: "solo",
     teamMembers: [],
->>>>>>> 5d886f7 (Updated Changes)
+
     performanceName: "Engineering vs MBA: Campus Tales",
     numParticipants: "1",
     description: "Clean stand-up comedy set exploring hostel life, mess food, and semester exams.",
@@ -100,20 +92,14 @@ const SAMPLE_REGISTRATIONS = [
   },
   {
     id: "GT26-4820",
-<<<<<<< HEAD
-    fullName: "Pooja Mehta & Group",
-=======
     fullName: "Pooja Mehta",
->>>>>>> 5d886f7 (Updated Changes)
+
     enrollmentNo: "230104018",
     schoolDept: "School of Technology (SOT)",
     semester: "4th Semester",
     phone: "9712345678",
     email: "pooja.m23@gsfcuniversity.ac.in",
     category: "drama",
-<<<<<<< HEAD
-    participationType: "Group",
-=======
     participationType: "Team",
     participationFormat: "team",
     teamMembers: [
@@ -121,7 +107,7 @@ const SAMPLE_REGISTRATIONS = [
       { name: "Smit Shah", enrollmentNumber: "230104020" },
       { name: "Meera Trivedi", enrollmentNumber: "230104021" }
     ],
->>>>>>> 5d886f7 (Updated Changes)
+
     performanceName: "The Digital Canvas (Campus Skit)",
     numParticipants: "4",
     description: "10-minute comedic and thought-provoking theatrical street play about social media addiction.",
@@ -142,11 +128,6 @@ const SAMPLE_REGISTRATIONS = [
     phone: "9909876543",
     email: "kabir.j22@gsfcuniversity.ac.in",
     category: "instrumental",
-<<<<<<< HEAD
-    participationType: "Solo",
-    performanceName: "Fingerstyle Acoustic Guitar Medley",
-    numParticipants: "1",
-=======
     participationType: "Duo",
     participationFormat: "duo",
     teamMembers: [
@@ -154,7 +135,7 @@ const SAMPLE_REGISTRATIONS = [
     ],
     performanceName: "Fingerstyle Acoustic Guitar & Percussion Duo",
     numParticipants: "2",
->>>>>>> 5d886f7 (Updated Changes)
+
     description: "Acoustic guitar instrumental covering popular folk melodies and contemporary hits.",
     status: "Shortlisted for Auditions",
     checkedIn: true,
@@ -199,29 +180,6 @@ export const fetchRegistrationsFromCloud = async () => {
     }
 
     if (data && data.length > 0) {
-<<<<<<< HEAD
-      const mapped = data.map((row) => ({
-        id: row.id,
-        fullName: row.full_name,
-        enrollmentNo: row.enrollment_no,
-        schoolDept: row.school_dept,
-        semester: row.semester,
-        phone: row.phone,
-        email: row.email,
-        category: row.category,
-        participationType: row.participation_type,
-        performanceName: row.performance_name,
-        numParticipants: row.num_participants,
-        description: row.description,
-        trackUrl: row.track_url || '',
-        trackFileName: row.track_file_name || '',
-        driveLink: row.drive_link || '',
-        status: row.status,
-        checkedIn: Boolean(row.checked_in),
-        slotTime: "22 Oct 2026 • TBA",
-        registeredAt: row.created_at
-      }));
-=======
       const mapped = data.map((row) => {
         let parsedMembers = [];
         if (row.team_members) {
@@ -255,7 +213,7 @@ export const fetchRegistrationsFromCloud = async () => {
           registeredAt: row.created_at
         };
       });
->>>>>>> 5d886f7 (Updated Changes)
+
 
       // Cache locally
       localStorage.setItem(STORAGE_KEY, JSON.stringify(mapped));
@@ -317,11 +275,8 @@ export const uploadAudioTrack = async (file, candidateId) => {
 export const saveRegistration = async (data, audioFile = null) => {
   const current = getRegistrations();
 
-<<<<<<< HEAD
-  // Duplicate Check
-=======
   // Duplicate Check for Primary Participant
->>>>>>> 5d886f7 (Updated Changes)
+
   const existing = current.find(
     (item) => item.enrollmentNo.toLowerCase().trim() === data.enrollmentNo.toLowerCase().trim()
   );
@@ -342,11 +297,6 @@ export const saveRegistration = async (data, audioFile = null) => {
     trackFileName = uploaded.fileName;
   }
 
-<<<<<<< HEAD
-  const newRegistration = {
-    ...data,
-    id: newId,
-=======
   const cleanTeamMembers = Array.isArray(data.teamMembers) ? data.teamMembers : [];
   const pType = data.participationType || 'Solo';
   const pFormat = (pType === 'Solo' ? 'solo' : pType === 'Duo' ? 'duo' : 'team');
@@ -359,7 +309,7 @@ export const saveRegistration = async (data, audioFile = null) => {
     participationFormat: pFormat,
     teamMembers: cleanTeamMembers,
     numParticipants: calcParticipants,
->>>>>>> 5d886f7 (Updated Changes)
+
     trackUrl,
     trackFileName,
     driveLink: data.driveLink || '',
@@ -382,11 +332,9 @@ export const saveRegistration = async (data, audioFile = null) => {
         email: newRegistration.email,
         category: newRegistration.category,
         participation_type: newRegistration.participationType,
-<<<<<<< HEAD
-=======
         participation_format: newRegistration.participationFormat,
         team_members: JSON.stringify(newRegistration.teamMembers),
->>>>>>> 5d886f7 (Updated Changes)
+
         performance_name: newRegistration.performanceName,
         num_participants: newRegistration.numParticipants,
         description: newRegistration.description,
@@ -417,8 +365,6 @@ export const saveRegistration = async (data, audioFile = null) => {
   return newRegistration;
 };
 
-<<<<<<< HEAD
-=======
 /**
  * Update Full Registration Record (including team members)
  */
@@ -471,7 +417,7 @@ export const updateRegistrationRecord = async (id, updatedFields) => {
   return updated;
 };
 
->>>>>>> 5d886f7 (Updated Changes)
+
 export const updateRegistrationStatus = async (id, newStatus) => {
   const current = getRegistrations();
   const updated = current.map((item) =>
@@ -494,26 +440,18 @@ export const toggleCheckInStatus = async (id) => {
   const current = getRegistrations();
   const target = current.find((item) => item.id === id);
   const newCheckedIn = target ? !target.checkedIn : true;
-<<<<<<< HEAD
-
-  const updated = current.map((item) =>
-    item.id === id ? { ...item, checkedIn: newCheckedIn } : item
-=======
   const checkInTime = newCheckedIn ? new Date().toISOString() : null;
 
   const updated = current.map((item) =>
     item.id === id ? { ...item, checkedIn: newCheckedIn, checkInTime } : item
->>>>>>> 5d886f7 (Updated Changes)
+
   );
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
   if (isSupabaseConfigured() && supabase) {
     try {
-<<<<<<< HEAD
-      await supabase.from('registrations').update({ checked_in: newCheckedIn }).eq('id', id);
-=======
       await supabase.from('registrations').update({ checked_in: newCheckedIn, check_in_time: checkInTime }).eq('id', id);
->>>>>>> 5d886f7 (Updated Changes)
+
     } catch (e) {
       console.warn("Supabase check-in update exception:", e);
     }
@@ -522,8 +460,6 @@ export const toggleCheckInStatus = async (id) => {
   return updated;
 };
 
-<<<<<<< HEAD
-=======
 export const processQrCheckIn = async (qrInput) => {
   if (!qrInput || typeof qrInput !== 'string') {
     return { status: 'INVALID_QR', message: 'Empty or invalid QR payload' };
@@ -607,7 +543,7 @@ export const processQrCheckIn = async (qrInput) => {
   };
 };
 
->>>>>>> 5d886f7 (Updated Changes)
+
 export const deleteRegistration = async (id) => {
   const current = getRegistrations();
   const updated = current.filter((item) => item.id !== id);
@@ -641,10 +577,8 @@ Your audition registration for *GSFCU GOT TALENT 2026* has been officially recei
 🎫 *Registration ID*: ${candidate.id}
 🎭 *Category*: ${candidate.category.toUpperCase()} (${candidate.participationType})
 🎵 *Act Title*: ${candidate.performanceName}
-<<<<<<< HEAD
-=======
 👥 *Total Performers*: ${candidate.numParticipants}
->>>>>>> 5d886f7 (Updated Changes)
+
 🏢 *Department*: ${candidate.schoolDept}
 📍 *Audition Venue*: ${EVENT_DETAILS.location}
 📅 *Audition Date*: 22 October 2026
@@ -668,23 +602,17 @@ export const generateEmailLink = (candidate) => {
   const body = 
 `Dear ${candidate.fullName},
 
-<<<<<<< HEAD
-Congratulations! Your official registration for GSFCU GOT TALENT 2026 (Navratri Special Edition) has been recorded.
-=======
 Congratulations! Your official registration for GSFCU GOT TALENT 2026 has been recorded.
->>>>>>> 5d886f7 (Updated Changes)
+
 
 REGISTRATION SUMMARY:
 ------------------------------------------
 • Registration ID : ${candidate.id}
 • Candidate Name  : ${candidate.fullName}
 • Enrollment No   : ${candidate.enrollmentNo}
-<<<<<<< HEAD
-• Category        : ${candidate.category.toUpperCase()} (${candidate.participationType})
-=======
 • Format / Type   : ${candidate.participationType} (${candidate.numParticipants} Performer(s))
 • Category        : ${candidate.category.toUpperCase()}
->>>>>>> 5d886f7 (Updated Changes)
+
 • Performance     : "${candidate.performanceName}"
 • Department      : ${candidate.schoolDept}
 • Date & Venue    : 22 October 2026 at ${EVENT_DETAILS.location}
@@ -708,61 +636,25 @@ export const exportRegistrationsCSV = () => {
 
   const headers = [
     "Registration ID",
-<<<<<<< HEAD
-    "Full Name",
-    "Enrollment No",
-=======
     "Participation Format",
     "Primary Participant / Team Lead",
     "Primary Enrollment",
     "Team Members",
     "Team Enrollment Numbers",
->>>>>>> 5d886f7 (Updated Changes)
+
     "Department",
     "Semester",
     "Phone",
     "Email",
-<<<<<<< HEAD
-    "Category",
-    "Format",
-    "Performance Title",
-    "Performers Count",
-=======
     "Talent Category",
     "Performance Title",
     "Total Performers",
->>>>>>> 5d886f7 (Updated Changes)
+
     "Audio Track URL",
     "Audio Track File",
     "Drive Link",
     "Status",
     "Checked In",
-<<<<<<< HEAD
-    "Slot Time",
-    "Registered Date"
-  ];
-
-  const rows = data.map((item) => [
-    `"${item.id}"`,
-    `"${item.fullName.replace(/"/g, '""')}"`,
-    `"${item.enrollmentNo}"`,
-    `"${item.schoolDept}"`,
-    `"${item.semester}"`,
-    `"${item.phone}"`,
-    `"${item.email}"`,
-    `"${item.category}"`,
-    `"${item.participationType}"`,
-    `"${item.performanceName.replace(/"/g, '""')}"`,
-    item.numParticipants,
-    `"${item.trackUrl || ''}"`,
-    `"${item.trackFileName || ''}"`,
-    `"${item.driveLink || ''}"`,
-    `"${item.status}"`,
-    item.checkedIn ? "YES" : "NO",
-    `"${item.slotTime || 'TBA'}"`,
-    `"${new Date(item.registeredAt).toLocaleDateString()}"`
-  ]);
-=======
     "Registered Date"
   ];
 
@@ -793,7 +685,7 @@ export const exportRegistrationsCSV = () => {
       `"${new Date(item.registeredAt).toLocaleDateString()}"`
     ];
   });
->>>>>>> 5d886f7 (Updated Changes)
+
 
   const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
   const encodedUri = encodeURI(csvContent);
@@ -804,8 +696,6 @@ export const exportRegistrationsCSV = () => {
   link.click();
   document.body.removeChild(link);
 };
-<<<<<<< HEAD
-=======
 
 const SPONSOR_ENQUIRIES_KEY = 'gsfcu_got_talent_2026_sponsor_enquiries';
 
@@ -1214,4 +1104,4 @@ export const deleteBrochureRecord = async () => {
 
 
 
->>>>>>> 5d886f7 (Updated Changes)
+

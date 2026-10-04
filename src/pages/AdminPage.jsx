@@ -1,11 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-<<<<<<< HEAD
-import { Link } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import DigitalPassModal from '../components/DigitalPassModal';
-import { isSupabaseConfigured } from '../services/supabaseClient';
-=======
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -13,17 +6,11 @@ import DigitalPassModal from '../components/DigitalPassModal';
 import CheckInScannerModal from '../components/CheckInScannerModal';
 import { isSupabaseConfigured } from '../services/supabaseClient';
 import { useAuth } from '../context/AuthContext';
->>>>>>> 5d886f7 (Updated Changes)
+
 import {
   getRegistrations,
   fetchRegistrationsFromCloud,
   updateRegistrationStatus,
-<<<<<<< HEAD
-  toggleCheckInStatus,
-  deleteRegistration,
-  exportRegistrationsCSV,
-  generateWhatsAppLink
-=======
   updateRegistrationRecord,
   toggleCheckInStatus,
   deleteRegistration,
@@ -38,28 +25,11 @@ import {
   fetchBrochureFromCloud,
   uploadBrochurePDF,
   deleteBrochureRecord
->>>>>>> 5d886f7 (Updated Changes)
+
 } from '../services/registrationService';
 import {
   Users, CheckCircle2, Award, Download, Search, Filter,
   Lock, QrCode, Trash2, Eye, RefreshCw, Music,
-<<<<<<< HEAD
-  Play, Pause, ExternalLink, MessageSquare, Database
-} from 'lucide-react';
-
-const VALID_PASSCODES = ["gsfcu2026", "admin", "gsfcu"];
-
-export default function AdminPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return (
-        localStorage.getItem('gsfcu_admin_auth') === 'true' ||
-        sessionStorage.getItem('gsfcu_admin_auth') === 'true'
-      );
-    }
-    return false;
-  });
-=======
   Play, Pause, ExternalLink, MessageSquare, Database, LogOut, Plus, Edit2, X, Check, User, Building2,
   FileText, Upload, Camera
 } from 'lucide-react';
@@ -82,19 +52,12 @@ export default function AdminPage() {
     }
   }, [location.pathname]);
 
->>>>>>> 5d886f7 (Updated Changes)
+
   const [passcodeInput, setPasscodeInput] = useState('');
   const [passcodeError, setPasscodeError] = useState('');
   
   const [registrations, setRegistrations] = useState(() => getRegistrations());
   const [searchTerm, setSearchTerm] = useState('');
-<<<<<<< HEAD
-  const [selectedCategory, setSelectedCategory] = useState('ALL');
-  const [selectedSchool, setSelectedSchool] = useState('ALL');
-  const [selectedPass, setSelectedPass] = useState(null);
-  const [quickCheckInId, setQuickCheckInId] = useState('');
-  const [checkInMsg, setCheckInMsg] = useState('');
-=======
   const [selectedFormatFilter, setSelectedFormatFilter] = useState('ALL'); // ALL, SOLO, DUO, TEAM
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [selectedSchool, setSelectedSchool] = useState('ALL');
@@ -137,7 +100,7 @@ export default function AdminPage() {
   const [quickCheckInId, setQuickCheckInId] = useState('');
   const [checkInMsg, setCheckInMsg] = useState('');
   const [scannerOpen, setScannerOpen] = useState(false);
->>>>>>> 5d886f7 (Updated Changes)
+
   const [isSyncing, setIsSyncing] = useState(false);
 
   // Sound Engineer In-Dashboard Audio Player
@@ -150,46 +113,17 @@ export default function AdminPage() {
     try {
       const data = await fetchRegistrationsFromCloud();
       setRegistrations(data);
-<<<<<<< HEAD
-=======
       const spData = await fetchSponsorsFromCloud();
       setSponsors(spData);
       const brochData = await fetchBrochureFromCloud();
       setBrochure(brochData);
->>>>>>> 5d886f7 (Updated Changes)
+
     } finally {
       setIsSyncing(false);
     }
   };
 
   useEffect(() => {
-<<<<<<< HEAD
-    if (isAuthenticated) {
-      handleSyncCloud();
-    }
-  }, [isAuthenticated]);
-
-  const handleLogin = (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    const cleanInput = passcodeInput.trim().toLowerCase();
-    if (VALID_PASSCODES.includes(cleanInput)) {
-      setIsAuthenticated(true);
-      localStorage.setItem('gsfcu_admin_auth', 'true');
-      sessionStorage.setItem('gsfcu_admin_auth', 'true');
-      setPasscodeError('');
-      handleSyncCloud();
-    } else {
-      setPasscodeError('Invalid Committee Passcode. Access denied.');
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('gsfcu_admin_auth');
-    sessionStorage.removeItem('gsfcu_admin_auth');
-    setIsAuthenticated(false);
-  };
-
-=======
     if (canAccessPortal) {
       handleSyncCloud();
     }
@@ -204,7 +138,7 @@ export default function AdminPage() {
     }
   };
 
->>>>>>> 5d886f7 (Updated Changes)
+
   const handleStatusChange = async (id, newStatus) => {
     const updated = await updateRegistrationStatus(id, newStatus);
     setRegistrations(updated);
@@ -216,23 +150,18 @@ export default function AdminPage() {
   };
 
   const handleDelete = async (id, name) => {
-<<<<<<< HEAD
-    if (window.confirm(`Are you sure you want to remove candidate ${name} (${id})?`)) {
-=======
     if (!isAdmin && !isCommittee) return;
     if (window.confirm(`Are you sure you want to remove performance registration for ${name} (${id})?`)) {
->>>>>>> 5d886f7 (Updated Changes)
+
       const updated = await deleteRegistration(id);
       setRegistrations(updated);
       if (activeTrack && activeTrack.id === id) {
         stopAudio();
       }
-<<<<<<< HEAD
-=======
       if (detailsRecord && detailsRecord.id === id) {
         setDetailsRecord(null);
       }
->>>>>>> 5d886f7 (Updated Changes)
+
     }
   };
 
@@ -241,17 +170,13 @@ export default function AdminPage() {
     const query = quickCheckInId.trim().toUpperCase();
     if (!query) return;
 
-<<<<<<< HEAD
-    const candidate = registrations.find(
-      (r) => r.id.toUpperCase() === query || r.enrollmentNo.toUpperCase() === query
-=======
     // Search by ID, Primary Enrollment, or Team Member Enrollment
     const candidate = registrations.find(
       (r) =>
         r.id.toUpperCase() === query ||
         r.enrollmentNo.toUpperCase() === query ||
         (r.teamMembers || []).some((m) => m.enrollmentNumber.toUpperCase() === query)
->>>>>>> 5d886f7 (Updated Changes)
+
     );
 
     if (candidate) {
@@ -263,11 +188,8 @@ export default function AdminPage() {
       }
       setQuickCheckInId('');
     } else {
-<<<<<<< HEAD
-      setCheckInMsg(`Error: Candidate with ID or Enrollment '${query}' was not found in database.`);
-=======
       setCheckInMsg(`Error: Candidate or Team Member with Enrollment '${query}' was not found in database.`);
->>>>>>> 5d886f7 (Updated Changes)
+
     }
   };
 
@@ -275,11 +197,8 @@ export default function AdminPage() {
   const playTrack = (candidate) => {
     if (!candidate.trackUrl) return;
     if (activeTrack && activeTrack.id === candidate.id && isPlaying) {
-<<<<<<< HEAD
-      audioRef.current.pause();
-=======
       audioRef.current?.pause();
->>>>>>> 5d886f7 (Updated Changes)
+
       setIsPlaying(false);
     } else {
       setActiveTrack(candidate);
@@ -300,10 +219,6 @@ export default function AdminPage() {
     setIsPlaying(false);
   };
 
-<<<<<<< HEAD
-  // Filtered dataset
-  const filteredData = registrations.filter((item) => {
-=======
   // Open Details Modal & Init Editing State
   const openDetailsModal = (record) => {
     setDetailsRecord(record);
@@ -481,37 +396,22 @@ export default function AdminPage() {
     }
 
     // Search Filter
->>>>>>> 5d886f7 (Updated Changes)
+
     const matchSearch =
       item.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.enrollmentNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-<<<<<<< HEAD
-      item.performanceName.toLowerCase().includes(searchTerm.toLowerCase());
-=======
       item.performanceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.teamMembers || []).some(
         (m) =>
           m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           m.enrollmentNumber.toLowerCase().includes(searchTerm.toLowerCase())
       );
->>>>>>> 5d886f7 (Updated Changes)
+
 
     const matchCategory = selectedCategory === 'ALL' || item.category.toLowerCase() === selectedCategory.toLowerCase();
     const matchSchool = selectedSchool === 'ALL' || item.schoolDept.toLowerCase().includes(selectedSchool.toLowerCase());
 
-<<<<<<< HEAD
-    return matchSearch && matchCategory && matchSchool;
-  });
-
-  // KPI Calculations
-  const totalCount = registrations.length;
-  const shortlistedCount = registrations.filter((r) => r.status && r.status.includes('Shortlist')).length;
-  const checkedInCount = registrations.filter((r) => r.checkedIn).length;
-  const audioTracksCount = registrations.filter((r) => r.trackUrl || r.driveLink).length;
-
-  if (!isAuthenticated) {
-=======
     return matchFormat && matchSearch && matchCategory && matchSchool;
   });
 
@@ -562,27 +462,11 @@ export default function AdminPage() {
 
   // 2. Access Restricted View
   if (!canAccessPortal) {
->>>>>>> 5d886f7 (Updated Changes)
+
     return (
       <div className="min-h-screen bg-[#08080a] text-[#F4E7D0] flex flex-col justify-between font-sans">
         <Navbar />
         <div className="flex-grow flex items-center justify-center px-4 py-24 sm:py-32">
-<<<<<<< HEAD
-          <div className="w-full max-w-md bg-[#0f0e13] border border-[#C49A3A]/25 rounded-2xl p-6 sm:p-8 shadow-2xl text-center">
-            
-            <div className="w-14 h-14 rounded-full bg-[#C96B35]/15 border border-[#C96B35]/30 mx-auto mb-4 flex items-center justify-center text-[#C96B35]">
-              <Lock className="w-6 h-6" />
-            </div>
-
-            <h1 className="font-bebas text-3xl sm:text-4xl text-[#F4E7D0] tracking-wider uppercase mb-1">
-              ORGANIZER PORTAL
-            </h1>
-            <p className="text-xs text-[#B5ACA0] font-sans mb-6">
-              Enter organizing committee credentials to manage auditions, track database, and back-stage console.
-            </p>
-
-            <form onSubmit={handleLogin} className="space-y-4">
-=======
           <div className="w-full max-w-md bg-[#0f0e13] border border-[#E86F2D]/30 rounded-2xl p-6 sm:p-8 shadow-2xl text-center relative overflow-hidden">
             
             <div className="w-14 h-14 rounded-full bg-[#E86F2D]/15 border border-[#E86F2D]/40 mx-auto mb-4 flex items-center justify-center text-[#E86F2D]">
@@ -600,20 +484,15 @@ export default function AdminPage() {
             </p>
 
             <form onSubmit={handleLoginSubmit} className="space-y-4 mb-4">
->>>>>>> 5d886f7 (Updated Changes)
+
               <div>
                 <input
                   type="password"
                   value={passcodeInput}
                   onChange={(e) => setPasscodeInput(e.target.value)}
-<<<<<<< HEAD
-                  placeholder="Enter Passcode (gsfcu2026)"
-                  className="w-full bg-[#08080a] border border-[#C49A3A]/30 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] placeholder-[#B5ACA0]/40 focus:outline-none focus:border-[#C96B35] font-mono text-center tracking-widest"
-                  autoFocus
-=======
                   placeholder="Enter Committee Passcode"
                   className="w-full bg-[#08080a] border border-[#E86F2D]/30 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] placeholder-[#C9C5BD]/40 focus:outline-none focus:border-[#E86F2D] font-mono text-center tracking-widest"
->>>>>>> 5d886f7 (Updated Changes)
+
                 />
                 {passcodeError && (
                   <p className="text-xs text-red-400 mt-2 font-mono">{passcodeError}</p>
@@ -622,30 +501,21 @@ export default function AdminPage() {
 
               <button
                 type="submit"
-<<<<<<< HEAD
-                className="w-full bg-[#C96B35] hover:bg-[#B65A3A] text-[#F4E7D0] font-mono font-bold text-xs uppercase tracking-wider py-3.5 rounded-md shadow-lg shadow-[#C96B35]/25 transition-all border border-[#C96B35] flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>ENTER ADMIN DASHBOARD →</span>
-=======
                 className="w-full bg-[#E86F2D] hover:bg-[#d05e1f] text-[#F1E8D8] font-mono font-bold text-xs uppercase tracking-wider py-3.5 rounded-md shadow-lg shadow-[#E86F2D]/25 transition-all border border-[#E86F2D] flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>ENTER PORTAL CONSOLE →</span>
->>>>>>> 5d886f7 (Updated Changes)
+
               </button>
             </form>
 
             <div className="mt-6 pt-4 border-t border-white/5">
-<<<<<<< HEAD
-              <Link to="/" className="text-xs font-mono text-[#B5ACA0] hover:text-[#C96B35] transition-colors">
-                ← Return to Event Site
-=======
               <Link
                 to="/"
                 className="inline-flex items-center gap-2 text-xs font-mono font-semibold text-[#E86F2D] hover:underline transition-colors"
               >
                 <span>RETURN TO WEBSITE</span>
                 <span>→</span>
->>>>>>> 5d886f7 (Updated Changes)
+
               </Link>
             </div>
 
@@ -656,10 +526,8 @@ export default function AdminPage() {
     );
   }
 
-<<<<<<< HEAD
-=======
   // 3. Authorized Control Room View
->>>>>>> 5d886f7 (Updated Changes)
+
   return (
     <div className="min-h-screen bg-[#08080a] text-[#F4E7D0] flex flex-col font-sans">
       <Navbar />
@@ -667,28 +535,6 @@ export default function AdminPage() {
       <main className="flex-grow pt-24 sm:pt-28 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         
         {/* Top Header Bar */}
-<<<<<<< HEAD
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 mb-8 border-b border-[#C49A3A]/20">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="font-bebas text-3xl sm:text-4xl text-[#F4E7D0] tracking-wide uppercase">
-                ORGANIZING COMMITTEE <span className="text-[#C96B35]">DASHBOARD</span>
-              </h1>
-              
-              {/* Cloud Database Status Badge */}
-              <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono border ${
-                isSupabaseConfigured()
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                  : 'bg-[#C49A3A]/10 border-[#C49A3A]/30 text-[#C49A3A]'
-              }`}>
-                <Database className="w-3 h-3" />
-                <span>{isSupabaseConfigured() ? 'SUPABASE CLOUD ACTIVE' : 'LOCAL MODE (READY FOR CLOUD)'}</span>
-              </div>
-            </div>
-
-            <p className="text-xs text-[#B5ACA0] font-sans mt-0.5">
-              Audition Check-in, Sound Tracks Console & Registration Records Management
-=======
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 mb-8 border-b border-[#E86F2D]/25">
           <div>
             <div className="flex items-center gap-3 flex-wrap">
@@ -716,7 +562,7 @@ export default function AdminPage() {
 
             <p className="text-xs text-[#C9C5BD] font-sans mt-1">
               Logged in as <strong className="text-[#F1E8D8]">{user?.name || user?.email || 'Committee User'}</strong> ({role})
->>>>>>> 5d886f7 (Updated Changes)
+
             </p>
           </div>
 
@@ -724,156 +570,34 @@ export default function AdminPage() {
             <button
               onClick={handleSyncCloud}
               disabled={isSyncing}
-<<<<<<< HEAD
-              className="px-3.5 py-2 rounded-md bg-[#0f0e13] hover:bg-white/5 border border-[#C49A3A]/25 text-xs font-mono text-[#F4E7D0] flex items-center gap-2 transition-colors disabled:opacity-50"
-              title="Sync latest submissions from cloud database"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 text-[#C96B35] ${isSyncing ? 'animate-spin' : ''}`} />
-=======
               className="px-3.5 py-2 rounded-md bg-[#0f0e13] hover:bg-white/5 border border-[#E86F2D]/30 text-xs font-mono text-[#F4E7D0] flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
               title="Sync latest submissions from database"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-[#E86F2D] ${isSyncing ? 'animate-spin' : ''}`} />
->>>>>>> 5d886f7 (Updated Changes)
+
               <span>{isSyncing ? 'Syncing...' : 'Sync Data'}</span>
             </button>
 
             <button
               onClick={exportRegistrationsCSV}
-<<<<<<< HEAD
-              className="px-4 py-2 rounded-md bg-[#C49A3A]/15 hover:bg-[#C49A3A]/25 border border-[#C49A3A]/30 text-xs font-mono text-[#F4E7D0] font-bold flex items-center gap-2 transition-colors shadow-md"
-            >
-              <Download className="w-3.5 h-3.5 text-[#C49A3A]" />
-=======
               className="px-4 py-2 rounded-md bg-[#E86F2D] hover:bg-[#d05e1f] border border-[#E86F2D] text-xs font-mono text-[#F1E8D8] font-bold flex items-center gap-2 transition-colors shadow-md cursor-pointer"
             >
               <Download className="w-3.5 h-3.5 text-[#F1E8D8]" />
->>>>>>> 5d886f7 (Updated Changes)
+
               <span>EXPORT CALL SHEET (CSV)</span>
             </button>
 
             <button
-<<<<<<< HEAD
-              onClick={handleLogout}
-              className="px-3 py-2 rounded-md bg-red-950/20 hover:bg-red-900/40 border border-red-500/30 text-xs font-mono text-red-300 transition-colors"
-            >
-              Logout
-=======
               onClick={logout}
               className="px-3 py-2 rounded-md bg-red-950/20 hover:bg-red-900/40 border border-red-500/30 text-xs font-mono text-red-300 transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>LOGOUT</span>
->>>>>>> 5d886f7 (Updated Changes)
+
             </button>
           </div>
         </div>
 
-<<<<<<< HEAD
-        {/* Quick Check-In Barcode / Passcode Input */}
-        <div className="mb-8 p-4 sm:p-6 rounded-2xl bg-gradient-to-r from-[#0f0e13] via-[#14141c] to-[#0f0e13] border border-[#C96B35]/35 shadow-xl">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <span className="text-[10px] font-mono text-[#C49A3A] uppercase tracking-wider font-bold block mb-1">
-                GATE VERIFICATION & EXPRESS PASS SCANNER
-              </span>
-              <h2 className="font-bebas text-xl sm:text-2xl text-[#F4E7D0] tracking-wide">
-                AUDITORIUM GATE CHECK-IN
-              </h2>
-            </div>
-
-            <form onSubmit={handleQuickCheckIn} className="flex items-center gap-2 w-full md:w-auto">
-              <div className="relative flex-grow md:w-80">
-                <QrCode className="w-4 h-4 text-[#C96B35] absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={quickCheckInId}
-                  onChange={(e) => setQuickCheckInId(e.target.value)}
-                  placeholder="Scan QR / Enter Registration ID or Enrollment"
-                  className="w-full bg-[#08080a] border border-[#C49A3A]/30 rounded-lg pl-10 pr-4 py-2.5 text-xs text-[#F4E7D0] placeholder-[#B5ACA0]/50 font-mono focus:outline-none focus:border-[#C96B35]"
-                />
-              </div>
-              <button
-                type="submit"
-                className="bg-[#C96B35] hover:bg-[#B65A3A] text-[#F4E7D0] text-xs font-mono font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg border border-[#C96B35] transition-colors whitespace-nowrap shadow-md"
-              >
-                CHECK IN
-              </button>
-            </form>
-          </div>
-
-          {checkInMsg && (
-            <div className={`mt-3 p-2.5 rounded-lg text-xs font-mono flex items-center gap-2 ${
-              checkInMsg.startsWith('Verified')
-                ? 'bg-emerald-950/40 border border-emerald-500/40 text-emerald-300'
-                : 'bg-amber-950/40 border border-amber-500/40 text-amber-300'
-            }`}>
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
-              <span>{checkInMsg}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Sound Engineer In-Dashboard Audio Player Bar */}
-        {activeTrack && (
-          <div className="mb-8 p-4 rounded-xl bg-[#14141c] border-2 border-[#C96B35] shadow-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 animate-in slide-in-from-top duration-200">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-lg bg-[#C96B35]/20 border border-[#C96B35]/40 flex items-center justify-center text-[#C96B35] shrink-0">
-                <Music className="w-6 h-6" />
-              </div>
-              <div className="overflow-hidden">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-[#C96B35] text-[#F4E7D0]">
-                    SOUND CONSOLE ACTIVE
-                  </span>
-                  <span className="font-mono text-xs text-[#C49A3A] font-bold">{activeTrack.id}</span>
-                </div>
-                <p className="font-bold text-[#F4E7D0] text-sm truncate mt-0.5">
-                  {activeTrack.fullName} — "{activeTrack.performanceName}"
-                </p>
-                <p className="text-[10px] text-[#B5ACA0] font-mono truncate">
-                  Track: {activeTrack.trackFileName || 'Attached MP3 Backing Track'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 self-end sm:self-center">
-              <button
-                onClick={() => playTrack(activeTrack)}
-                className="px-4 py-2 rounded-lg bg-[#C96B35] hover:bg-[#B65A3A] text-[#F4E7D0] text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-colors shadow-lg"
-              >
-                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                <span>{isPlaying ? 'PAUSE TRACK' : 'RESUME'}</span>
-              </button>
-
-              {activeTrack.trackUrl && (
-                <a
-                  href={activeTrack.trackUrl}
-                  download={`${activeTrack.id}_${activeTrack.fullName}_Track.mp3`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-[#F4E7D0] flex items-center gap-1.5 transition-colors"
-                  title="Download Track to Sound Console"
-                >
-                  <Download className="w-3.5 h-3.5 text-[#C49A3A]" />
-                  <span>Download</span>
-                </a>
-              )}
-
-              <button
-                onClick={stopAudio}
-                className="text-xs font-mono text-[#B5ACA0] hover:text-white px-2 py-1"
-              >
-                Close Player
-              </button>
-
-              <audio
-                ref={audioRef}
-                src={activeTrack.trackUrl}
-                onEnded={() => setIsPlaying(false)}
-                className="hidden"
-              />
-=======
         {/* Dashboard Section Navigation Bar */}
         <div className="flex items-center gap-2 mb-8 bg-[#0f0e13] p-1.5 rounded-xl border border-[#C49A3A]/25 overflow-x-auto">
           <button
@@ -1295,268 +1019,11 @@ export default function AdminPage() {
                   </tbody>
                 </table>
               </div>
->>>>>>> 5d886f7 (Updated Changes)
+
             </div>
           </div>
         )}
 
-<<<<<<< HEAD
-        {/* Real-Time KPI Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          
-          <div className="p-4 sm:p-5 rounded-xl bg-[#0f0e13] border border-[#C49A3A]/20 shadow-md">
-            <div className="flex items-center justify-between text-[#B5ACA0] text-xs font-mono mb-2">
-              <span>TOTAL CANDIDATES</span>
-              <Users className="w-4 h-4 text-[#C96B35]" />
-            </div>
-            <div className="font-bebas text-3xl sm:text-4xl text-[#F4E7D0]">{totalCount}</div>
-            <div className="text-[10px] text-[#68734A] font-mono mt-1">Logged in Event Roster</div>
-          </div>
-
-          <div className="p-4 sm:p-5 rounded-xl bg-[#0f0e13] border border-[#C49A3A]/20 shadow-md">
-            <div className="flex items-center justify-between text-[#B5ACA0] text-xs font-mono mb-2">
-              <span>CHECKED IN AT GATE</span>
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            </div>
-            <div className="font-bebas text-3xl sm:text-4xl text-emerald-400">{checkedInCount}</div>
-            <div className="text-[10px] text-[#B5ACA0] font-mono mt-1">
-              {totalCount > 0 ? Math.round((checkedInCount / totalCount) * 100) : 0}% Attendance
-            </div>
-          </div>
-
-          <div className="p-4 sm:p-5 rounded-xl bg-[#0f0e13] border border-[#C49A3A]/20 shadow-md">
-            <div className="flex items-center justify-between text-[#B5ACA0] text-xs font-mono mb-2">
-              <span>AUDIO TRACKS READY</span>
-              <Music className="w-4 h-4 text-[#C49A3A]" />
-            </div>
-            <div className="font-bebas text-3xl sm:text-4xl text-[#C49A3A]">{audioTracksCount}</div>
-            <div className="text-[10px] text-[#B5ACA0] font-mono mt-1">MP3 / Drive Links Attached</div>
-          </div>
-
-          <div className="p-4 sm:p-5 rounded-xl bg-[#0f0e13] border border-[#C49A3A]/20 shadow-md">
-            <div className="flex items-center justify-between text-[#B5ACA0] text-xs font-mono mb-2">
-              <span>SHORTLISTED ACTS</span>
-              <Award className="w-4 h-4 text-[#C96B35]" />
-            </div>
-            <div className="font-bebas text-3xl sm:text-4xl text-[#C96B35]">{shortlistedCount}</div>
-            <div className="text-[10px] text-[#B5ACA0] font-mono mt-1">Advancing to Finale</div>
-          </div>
-
-        </div>
-
-        {/* Filter & Search Bar */}
-        <div className="p-4 rounded-xl bg-[#0f0e13] border border-[#C49A3A]/20 mb-6 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-          
-          <div className="relative flex-grow max-w-md">
-            <Search className="w-4 h-4 text-[#B5ACA0] absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by candidate name, enrollment, ID, or act title..."
-              className="w-full bg-[#08080a] border border-[#C49A3A]/20 rounded-lg pl-9 pr-4 py-2 text-xs text-[#F4E7D0] placeholder-[#B5ACA0]/50 focus:outline-none focus:border-[#C96B35]"
-            />
-          </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-2">
-              <Filter className="w-3.5 h-3.5 text-[#C49A3A]" />
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="bg-[#08080a] border border-[#C49A3A]/25 rounded-lg px-3 py-2 text-xs text-[#F4E7D0] focus:outline-none focus:border-[#C96B35]"
-              >
-                <option value="ALL">All Categories</option>
-                <option value="singing">Singing</option>
-                <option value="dance">Dance</option>
-                <option value="drama">Drama</option>
-                <option value="instrumental">Instrumental</option>
-                <option value="comedy">Comedy</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            <select
-              value={selectedSchool}
-              onChange={(e) => setSelectedSchool(e.target.value)}
-              className="bg-[#08080a] border border-[#C49A3A]/25 rounded-lg px-3 py-2 text-xs text-[#F4E7D0] focus:outline-none focus:border-[#C96B35]"
-            >
-              <option value="ALL">All Schools / Streams</option>
-              <option value="Technology">School of Technology (SOT)</option>
-              <option value="Science">School of Science (SOS)</option>
-              <option value="Management">School of Management (SOM)</option>
-              <option value="Chemical">Chemical Sciences</option>
-            </select>
-          </div>
-
-        </div>
-
-        {/* Data Table */}
-        <div className="bg-[#0f0e13] border border-[#C49A3A]/20 rounded-xl overflow-hidden shadow-xl">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              
-              <thead>
-                <tr className="border-b border-[#C49A3A]/20 bg-[#14141c] font-mono text-[11px] text-[#C49A3A] uppercase tracking-wider">
-                  <th className="py-3.5 px-4">ID</th>
-                  <th className="py-3.5 px-4">Candidate & Department</th>
-                  <th className="py-3.5 px-4">Act Details</th>
-                  <th className="py-3.5 px-4">Audio Track</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4 text-center">Stage Check-In</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-white/5 font-sans">
-                {filteredData.length > 0 ? (
-                  filteredData.map((item) => (
-                    <tr key={item.id} className="hover:bg-white/[0.02] transition-colors">
-                      
-                      {/* ID */}
-                      <td className="py-3.5 px-4 font-mono font-bold text-[#C96B35] whitespace-nowrap">
-                        {item.id}
-                      </td>
-
-                      {/* Name & Dept */}
-                      <td className="py-3.5 px-4">
-                        <div className="font-bold text-[#F4E7D0] text-sm">{item.fullName}</div>
-                        <div className="font-mono text-[11px] text-[#B5ACA0]">
-                          {item.enrollmentNo} • {item.schoolDept}
-                        </div>
-                        <div className="text-[10px] text-[#B5ACA0]/70 font-mono mt-0.5">
-                          Ph: {item.phone}
-                        </div>
-                      </td>
-
-                      {/* Performance */}
-                      <td className="py-3.5 px-4">
-                        <div className="font-medium text-[#F4E7D0]">{item.performanceName}</div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="font-mono text-[10px] uppercase font-bold text-[#C49A3A]">
-                            {item.category}
-                          </span>
-                          <span className="text-[#B5ACA0] text-[10px]">
-                            ({item.participationType}, {item.numParticipants} performer)
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Audio / Media Track */}
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        {item.trackUrl ? (
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => playTrack(item)}
-                              className={`px-2.5 py-1 rounded text-[10px] font-mono font-bold flex items-center gap-1.5 transition-colors ${
-                                activeTrack && activeTrack.id === item.id && isPlaying
-                                  ? 'bg-[#C96B35] text-[#F4E7D0]'
-                                  : 'bg-[#C96B35]/20 hover:bg-[#C96B35]/30 text-[#C96B35] border border-[#C96B35]/30'
-                              }`}
-                            >
-                              {activeTrack && activeTrack.id === item.id && isPlaying ? (
-                                <Pause className="w-3 h-3" />
-                              ) : (
-                                <Play className="w-3 h-3" />
-                              )}
-                              <span>{activeTrack && activeTrack.id === item.id && isPlaying ? 'Playing' : 'Play Track'}</span>
-                            </button>
-                          </div>
-                        ) : item.driveLink ? (
-                          <a
-                            href={item.driveLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-2.5 py-1 rounded bg-[#C49A3A]/15 hover:bg-[#C49A3A]/25 border border-[#C49A3A]/30 text-[#C49A3A] text-[10px] font-mono font-bold flex items-center gap-1 transition-colors"
-                          >
-                            <span>Drive Audio</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        ) : (
-                          <span className="text-[10px] text-[#B5ACA0]/50 font-mono">No Track</span>
-                        )}
-                      </td>
-
-                      {/* Status */}
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <select
-                          value={item.status}
-                          onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                          className="bg-[#08080a] border border-[#C49A3A]/25 rounded px-2.5 py-1 text-[11px] font-mono text-[#F4E7D0] focus:outline-none focus:border-[#C96B35]"
-                        >
-                          <option value="Registered">Registered</option>
-                          <option value="Shortlisted for Auditions">Shortlisted for Auditions</option>
-                          <option value="Grand Finalist">Grand Finalist</option>
-                          <option value="Disqualified">Disqualified</option>
-                        </select>
-                      </td>
-
-                      {/* Check-In */}
-                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                        <button
-                          onClick={() => handleCheckInToggle(item.id)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-mono text-[10px] font-bold uppercase transition-all ${
-                            item.checkedIn
-                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                              : 'bg-white/5 text-[#B5ACA0] border border-white/10 hover:border-[#C96B35]/40'
-                          }`}
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>{item.checkedIn ? 'Checked In' : 'Pending'}</span>
-                        </button>
-                      </td>
-
-                      {/* Actions */}
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                        <div className="inline-flex items-center gap-1.5">
-                          {/* Direct WhatsApp Contact Button */}
-                          <a
-                            href={generateWhatsAppLink(item)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-1.5 rounded bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white transition-colors"
-                            title="Message Candidate on WhatsApp"
-                          >
-                            <MessageSquare className="w-3.5 h-3.5" />
-                          </a>
-
-                          <button
-                            onClick={() => setSelectedPass(item)}
-                            className="p-1.5 rounded bg-white/5 hover:bg-[#C96B35] text-[#F4E7D0] transition-colors"
-                            title="View Official Digital Pass & QR"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                          </button>
-
-                          <button
-                            onClick={() => handleDelete(item.id, item.fullName)}
-                            className="p-1.5 rounded bg-white/5 hover:bg-red-500 text-[#B5ACA0] hover:text-white transition-colors"
-                            title="Delete Candidate"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="7" className="text-center py-12 text-sm text-[#B5ACA0] font-mono">
-                      No matching participants found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-
-            </table>
-          </div>
-        </div>
-
-      </main>
-
-      {/* Digital Pass Modal */}
-=======
         {/* TAB 2: SPONSOR MANAGEMENT MODULE */}
         {activeTab === 'sponsors' && (
           <div>
@@ -2225,7 +1692,7 @@ export default function AdminPage() {
       )}
 
       {/* DIGITAL PASS MODAL */}
->>>>>>> 5d886f7 (Updated Changes)
+
       {selectedPass && (
         <DigitalPassModal
           registration={selectedPass}
@@ -2233,8 +1700,6 @@ export default function AdminPage() {
         />
       )}
 
-<<<<<<< HEAD
-=======
       {/* QR CHECK-IN CAMERA SCANNER MODAL */}
       <CheckInScannerModal
         isOpen={scannerOpen}
@@ -2244,7 +1709,7 @@ export default function AdminPage() {
         }}
       />
 
->>>>>>> 5d886f7 (Updated Changes)
+
       <Footer />
     </div>
   );
