@@ -10,6 +10,8 @@ import { useAuth } from '../context/AuthContext';
 import {
   getRegistrations,
   fetchRegistrationsFromCloud,
+  subscribeToRegistrations,
+  subscribeToSponsors,
   updateRegistrationStatus,
   updateRegistrationRecord,
   toggleCheckInStatus,
@@ -126,8 +128,22 @@ export default function AdminPage() {
   useEffect(() => {
     if (canAccessPortal) {
       handleSyncCloud();
+
+      const unsubscribeRegs = subscribeToRegistrations((freshData) => {
+        setRegistrations(freshData);
+      });
+
+      const unsubscribeSponsors = subscribeToSponsors((freshData) => {
+        setSponsors(freshData);
+      });
+
+      return () => {
+        if (unsubscribeRegs) unsubscribeRegs();
+        if (unsubscribeSponsors) unsubscribeSponsors();
+      };
     }
   }, [canAccessPortal]);
+
 
   const handleLoginSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();

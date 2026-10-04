@@ -10,153 +10,23 @@ import { EVENT_DETAILS } from '../data/eventData';
 
 const STORAGE_KEY = 'gsfcu_got_talent_2026_registrations';
 
-// Pre-seeded authentic registrations for testing & demo purposes
-const SAMPLE_REGISTRATIONS = [
-  {
-    id: "GT26-1042",
-    fullName: "Aarav Sharma",
-    enrollmentNo: "230101042",
-    schoolDept: "School of Technology (SOT)",
-    semester: "4th Semester",
-    phone: "9876543210",
-    email: "aarav.s23@gsfcuniversity.ac.in",
-    category: "singing",
-    participationType: "Solo",
-    participationFormat: "solo",
-    teamMembers: [],
-
-    performanceName: "Raag Bhairavi Classical & Bollywood Fusion",
-    numParticipants: "1",
-    description: "Semi-classical vocal performance with electronic tanpura backing track.",
-    status: "Shortlisted for Auditions",
-    checkedIn: true,
-    slotTime: "22 Oct 2026 • 10:00 AM",
-    trackUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-    trackFileName: "Aarav_Tanpura_Backing_Track.mp3",
-    driveLink: "",
-    registeredAt: "2026-10-01T14:20:00Z"
-  },
-  {
-    id: "GT26-2189",
-    fullName: "Diya Vaghela",
-    enrollmentNo: "220202115",
-    schoolDept: "School of Science (SOS)",
-    semester: "6th Semester",
-    phone: "9823456781",
-    email: "diya.v22@gsfcuniversity.ac.in",
-    category: "dance",
-    participationType: "Team",
-    participationFormat: "team",
-    teamMembers: [
-      { name: "Kavya Patel", enrollmentNumber: "220202116" },
-      { name: "Pooja Vaghela", enrollmentNumber: "220202117" },
-      { name: "Riya Shah", enrollmentNumber: "220202118" },
-      { name: "Neha Joshi", enrollmentNumber: "220202119" },
-      { name: "Anjali Parmar", enrollmentNumber: "220202120" }
-    ],
-    performanceName: "Garba Beats & Contemporary Hip-Hop",
-
-    numParticipants: "6",
-    description: "High-energy Garba fusion routine with traditional Gujarati chaniya choli and modern street formations.",
-    status: "Shortlisted for Auditions",
-    checkedIn: false,
-    slotTime: "22 Oct 2026 • 10:45 AM",
-    trackUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-    trackFileName: "Garba_Fusion_Mix_Final.mp3",
-    driveLink: "https://drive.google.com/drive/folders/sample-dance-track",
-    registeredAt: "2026-10-01T16:45:00Z"
-  },
-  {
-    id: "GT26-3401",
-    fullName: "Rohan Trivedi",
-    enrollmentNo: "240301089",
-    schoolDept: "School of Management (SOM)",
-    semester: "2nd Semester",
-    phone: "9898123456",
-    email: "rohan.t24@gsfcuniversity.ac.in",
-    category: "comedy",
-    participationType: "Solo",
-    participationFormat: "solo",
-    teamMembers: [],
-
-    performanceName: "Engineering vs MBA: Campus Tales",
-    numParticipants: "1",
-    description: "Clean stand-up comedy set exploring hostel life, mess food, and semester exams.",
-    status: "Registered",
-    checkedIn: false,
-    slotTime: "22 Oct 2026 • 11:30 AM",
-    trackUrl: "",
-    trackFileName: "",
-    driveLink: "",
-    registeredAt: "2026-10-02T09:15:00Z"
-  },
-  {
-    id: "GT26-4820",
-    fullName: "Pooja Mehta",
-
-    enrollmentNo: "230104018",
-    schoolDept: "School of Technology (SOT)",
-    semester: "4th Semester",
-    phone: "9712345678",
-    email: "pooja.m23@gsfcuniversity.ac.in",
-    category: "drama",
-    participationType: "Team",
-    participationFormat: "team",
-    teamMembers: [
-      { name: "Aarav Patel", enrollmentNumber: "230104019" },
-      { name: "Smit Shah", enrollmentNumber: "230104020" },
-      { name: "Meera Trivedi", enrollmentNumber: "230104021" }
-    ],
-
-    performanceName: "The Digital Canvas (Campus Skit)",
-    numParticipants: "4",
-    description: "10-minute comedic and thought-provoking theatrical street play about social media addiction.",
-    status: "Registered",
-    checkedIn: false,
-    slotTime: "22 Oct 2026 • 01:15 PM",
-    trackUrl: "",
-    trackFileName: "",
-    driveLink: "https://drive.google.com/file/d/sample-drama-bgm/view",
-    registeredAt: "2026-10-02T11:30:00Z"
-  },
-  {
-    id: "GT26-5509",
-    fullName: "Kabir Joshi",
-    enrollmentNo: "220102065",
-    schoolDept: "School of Chemical Sciences",
-    semester: "6th Semester",
-    phone: "9909876543",
-    email: "kabir.j22@gsfcuniversity.ac.in",
-    category: "instrumental",
-    participationType: "Duo",
-    participationFormat: "duo",
-    teamMembers: [
-      { name: "Rohan Patel", enrollmentNumber: "220102066" }
-    ],
-    performanceName: "Fingerstyle Acoustic Guitar & Percussion Duo",
-    numParticipants: "2",
-
-    description: "Acoustic guitar instrumental covering popular folk melodies and contemporary hits.",
-    status: "Shortlisted for Auditions",
-    checkedIn: true,
-    slotTime: "22 Oct 2026 • 02:00 PM",
-    trackUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-    trackFileName: "Acoustic_Click_Track.mp3",
-    driveLink: "",
-    registeredAt: "2026-10-02T13:00:00Z"
-  }
-];
+/// Legacy sample IDs filter to ensure any old cached test records are purged
+const LEGACY_SAMPLE_IDS = ["GT26-1042", "GT26-2189", "GT26-3401", "GT26-4820", "GT26-5509"];
 
 export const getRegistrations = () => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(SAMPLE_REGISTRATIONS));
-      return SAMPLE_REGISTRATIONS;
+      return [];
     }
-    return JSON.parse(stored);
+    const parsed = JSON.parse(stored);
+    const cleaned = parsed.filter(item => !LEGACY_SAMPLE_IDS.includes(item.id));
+    if (cleaned.length !== parsed.length) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
+    }
+    return cleaned;
   } catch {
-    return SAMPLE_REGISTRATIONS;
+    return [];
   }
 };
 
@@ -179,41 +49,43 @@ export const fetchRegistrationsFromCloud = async () => {
       return getRegistrations();
     }
 
-    if (data && data.length > 0) {
-      const mapped = data.map((row) => {
-        let parsedMembers = [];
-        if (row.team_members) {
-          try {
-            parsedMembers = typeof row.team_members === 'string' ? JSON.parse(row.team_members) : row.team_members;
-          } catch (e) {
-            parsedMembers = [];
+    if (data) {
+      const mapped = data
+        .filter(row => !LEGACY_SAMPLE_IDS.includes(row.id))
+        .map((row) => {
+          let parsedMembers = [];
+          if (row.team_members) {
+            try {
+              parsedMembers = typeof row.team_members === 'string' ? JSON.parse(row.team_members) : row.team_members;
+            } catch (e) {
+              parsedMembers = [];
+            }
           }
-        }
-        return {
-          id: row.id,
-          fullName: row.full_name,
-          enrollmentNo: row.enrollment_no,
-          schoolDept: row.school_dept,
-          semester: row.semester,
-          phone: row.phone,
-          email: row.email,
-          category: row.category,
-          participationType: row.participation_type || 'Solo',
-          participationFormat: row.participation_format || (row.participation_type ? row.participation_type.toLowerCase() : 'solo'),
-          teamMembers: parsedMembers,
-          performanceName: row.performance_name,
-          numParticipants: row.num_participants || (1 + parsedMembers.length),
-          description: row.description,
-          trackUrl: row.track_url || '',
-          trackFileName: row.track_file_name || '',
-          driveLink: row.drive_link || '',
-          status: row.status,
-          checkedIn: Boolean(row.checked_in),
-          slotTime: "22 Oct 2026 • TBA",
-          registeredAt: row.created_at
-        };
-      });
-
+          return {
+            id: row.id,
+            fullName: row.full_name,
+            enrollmentNo: row.enrollment_no,
+            schoolDept: row.school_dept,
+            semester: row.semester,
+            phone: row.phone,
+            email: row.email,
+            category: row.category,
+            participationType: row.participation_type || 'Solo',
+            participationFormat: row.participation_format || (row.participation_type ? row.participation_type.toLowerCase() : 'solo'),
+            teamMembers: parsedMembers,
+            performanceName: row.performance_name,
+            numParticipants: row.num_participants || (1 + parsedMembers.length),
+            description: row.description,
+            trackUrl: row.track_url || '',
+            trackFileName: row.track_file_name || '',
+            driveLink: row.drive_link || '',
+            status: row.status,
+            checkedIn: Boolean(row.checked_in),
+            checkInTime: row.check_in_time || null,
+            slotTime: "22 Oct 2026 • TBA",
+            registeredAt: row.created_at
+          };
+        });
 
       // Cache locally
       localStorage.setItem(STORAGE_KEY, JSON.stringify(mapped));
@@ -226,6 +98,88 @@ export const fetchRegistrationsFromCloud = async () => {
     return getRegistrations();
   }
 };
+
+/**
+ * Realtime Subscription for Registrations Table
+ */
+export const subscribeToRegistrations = (onDataChanged) => {
+  const handleLocalUpdate = () => {
+    onDataChanged(getRegistrations());
+  };
+
+  window.addEventListener('registrationsUpdated', handleLocalUpdate);
+  window.addEventListener('storage', handleLocalUpdate);
+
+  if (!isSupabaseConfigured() || !supabase) {
+    return () => {
+      window.removeEventListener('registrationsUpdated', handleLocalUpdate);
+      window.removeEventListener('storage', handleLocalUpdate);
+    };
+  }
+
+  const channel = supabase
+    .channel('public:registrations')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'registrations' },
+      async () => {
+        const freshData = await fetchRegistrationsFromCloud();
+        onDataChanged(freshData);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+    window.removeEventListener('registrationsUpdated', handleLocalUpdate);
+    window.removeEventListener('storage', handleLocalUpdate);
+  };
+};
+
+/**
+ * Realtime Subscription for Sponsors Table
+ */
+export const subscribeToSponsors = (onDataChanged) => {
+  const handleLocalUpdate = () => {
+    onDataChanged(getSponsors());
+  };
+
+  window.addEventListener('sponsorsUpdated', handleLocalUpdate);
+  window.addEventListener('storage', handleLocalUpdate);
+
+  if (!isSupabaseConfigured() || !supabase) {
+    return () => {
+      window.removeEventListener('sponsorsUpdated', handleLocalUpdate);
+      window.removeEventListener('storage', handleLocalUpdate);
+    };
+  }
+
+  const channel = supabase
+    .channel('public:sponsors')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'sponsors' },
+      async () => {
+        const freshData = await fetchSponsorsFromCloud();
+        onDataChanged(freshData);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+    window.removeEventListener('sponsorsUpdated', handleLocalUpdate);
+    window.removeEventListener('storage', handleLocalUpdate);
+  };
+};
+
+const notifyRegistrationsChanged = () => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('registrationsUpdated'));
+    window.dispatchEvent(new Event('storage'));
+  }
+};
+
 
 /**
  * Upload Audio File to Supabase Storage or create client-side Blob URL
@@ -362,6 +316,7 @@ export const saveRegistration = async (data, audioFile = null) => {
     console.error("Failed to save to localStorage", e);
   }
 
+  notifyRegistrationsChanged();
   return newRegistration;
 };
 
@@ -414,6 +369,7 @@ export const updateRegistrationRecord = async (id, updatedFields) => {
     }
   }
 
+  notifyRegistrationsChanged();
   return updated;
 };
 
@@ -433,6 +389,7 @@ export const updateRegistrationStatus = async (id, newStatus) => {
     }
   }
 
+  notifyRegistrationsChanged();
   return updated;
 };
 
@@ -457,6 +414,7 @@ export const toggleCheckInStatus = async (id) => {
     }
   }
 
+  notifyRegistrationsChanged();
   return updated;
 };
 
@@ -533,6 +491,7 @@ export const processQrCheckIn = async (qrInput) => {
     }
   }
 
+  notifyRegistrationsChanged();
   const updatedRecord = updated.find(r => r.id === target.id);
   return {
     status: 'SUCCESS',
@@ -557,6 +516,7 @@ export const deleteRegistration = async (id) => {
     }
   }
 
+  notifyRegistrationsChanged();
   return updated;
 };
 
