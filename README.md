@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # 🎭 GSFCU Got Talent 2026 — Navratri Special Edition
+=======
+# 🎭 GSFCU Got Talent 2026
+>>>>>>> 5d886f7 (Updated Changes)
 
 The official web platform and audition management portal for **GSFC University Got Talent 2026**.
 

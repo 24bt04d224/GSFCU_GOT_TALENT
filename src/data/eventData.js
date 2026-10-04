@@ -7,11 +7,24 @@ export const EVENT_DETAILS = {
   auditionDay: "THURSDAY",
   auditionFullDate: "Thursday, 22 October 2026",
   university: "GSFC University",
+<<<<<<< HEAD
   location: "Main Auditorium, GSFC University Campus, Vadodara",
   season: "Navratri Special Edition",
   whatsappGroupUrl: "https://chat.whatsapp.com/GT26-OFFICIAL-GROUP-PLACEHOLDER",
   contactEmail: "gottalent@gsfcuniversity.ac.in",
   instagramHandle: "@gsfcu_gottalent"
+=======
+  location: "Aanganva, GSFC University",
+  venue: "Aanganva, GSFC University",
+  season: "2026 Edition",
+  whatsappGroupUrl: "https://chat.whatsapp.com/LETsJjET2As6fXFHCA8iAh",
+  contactEmail: "radiogsfcu@gsfcuniversity.ac.in",
+  instagramHandles: [
+    { handle: "@radiogsfcu", url: "https://instagram.com/radiogsfcu" },
+    { handle: "@theatreclub_gsfcu", url: "https://instagram.com/theatreclub_gsfcu" }
+  ],
+  instagramHandle: "@radiogsfcu"
+>>>>>>> 5d886f7 (Updated Changes)
 };
 
 export const TALENT_CATEGORIES = [
@@ -88,20 +101,32 @@ export const HOW_IT_WORKS_STEPS = [
     step: "02",
     title: "AUDITIONS",
     subtitle: "22 OCTOBER 2026 • THURSDAY",
+<<<<<<< HEAD
     description: "Perform your preliminary act in front of our faculty & guest judges panel during the campus audition rounds on Thursday, 22 October 2026. Receive immediate jury feedback."
+=======
+    description: "Perform your preliminary act in front of our faculty & guest judges panel during the campus audition rounds at Aanganva, GSFC University on Thursday, 22 October 2026."
+>>>>>>> 5d886f7 (Updated Changes)
   },
   {
     step: "03",
     title: "GRAND SHOWCASE",
     subtitle: "29 OCTOBER 2026",
+<<<<<<< HEAD
     description: "Shortlisted finalists will take center stage at the GSFCU Grand Auditorium on 29 October 2026 before a live audience and celebrity judges."
+=======
+    description: "Shortlisted finalists will take center stage at Aanganva, GSFC University on 29 October 2026 before a live audience and celebrity judges."
+>>>>>>> 5d886f7 (Updated Changes)
   }
 ];
 
 export const IMPORTANT_INFO = [
   {
     title: "Event Dates & Schedule",
+<<<<<<< HEAD
     detail: "Auditions will be held on Thursday, 22 October 2026. The GSFCU Got Talent 2026 Grand Showcase will be held on Thursday, 29 October 2026. Detailed call sheets will be issued to registered candidates."
+=======
+    detail: "Auditions will be held on Thursday, 22 October 2026. The GSFCU Got Talent 2026 Grand Showcase will be held on Thursday, 29 October 2026 at Aanganva, GSFC University."
+>>>>>>> 5d886f7 (Updated Changes)
   },
   {
     title: "Registration Guidelines",
@@ -113,7 +138,11 @@ export const IMPORTANT_INFO = [
   },
   {
     title: "Performance & Equipment",
+<<<<<<< HEAD
     detail: "Stage lighting, sound setup, microphones, and basic PA systems are provided. Specific props or custom audio tracks must be pre-submitted."
+=======
+    detail: "Stage lighting, sound setup, microphones, and basic PA systems are provided at Aanganva. Specific props or custom audio tracks must be pre-submitted."
+>>>>>>> 5d886f7 (Updated Changes)
   },
   {
     title: "Official Announcements",
@@ -160,8 +189,13 @@ export const FAQS = [
     answer: "Any currently enrolled student of GSFC University (B.Tech, B.Sc, BBA, MBA, M.Sc, etc.) with a valid enrollment number can participate."
   },
   {
+<<<<<<< HEAD
     question: "When are the auditions and the main event held?",
     answer: "Auditions will be held on Thursday, 22 October 2026. The GSFCU Got Talent 2026 Grand Showcase will be held on Thursday, 29 October 2026."
+=======
+    question: "When and where are the auditions and the main event held?",
+    answer: "Auditions will be held on Thursday, 22 October 2026. The GSFCU Got Talent 2026 Grand Showcase will be held on Thursday, 29 October 2026 at Aanganva, GSFC University."
+>>>>>>> 5d886f7 (Updated Changes)
   },
   {
     question: "What talent categories can I register for?",
@@ -177,7 +211,13 @@ export const FAQS = [
   },
   {
     question: "Where and when will I receive audition updates?",
+<<<<<<< HEAD
     answer: "Auditions will be held on Thursday, 22 October 2026. After submitting your registration form, you will get a link to join the official GSFCU Got Talent WhatsApp Group where audition reporting times and stage rules are shared."
   }
 ];
 
+=======
+    answer: "Auditions will be held on Thursday, 22 October 2026 at Aanganva, GSFC University. After submitting your registration form, you will get a link to join the official GSFCU Got Talent WhatsApp Group where audition reporting times and stage rules are shared."
+  }
+];
+>>>>>>> 5d886f7 (Updated Changes)

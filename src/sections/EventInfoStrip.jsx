@@ -5,9 +5,15 @@ import { Calendar, MapPin, Radio, Sparkles } from 'lucide-react';
 export default function EventInfoStrip() {
   const items = [
     { icon: Calendar, text: EVENT_DETAILS.date, highlight: true },
+<<<<<<< HEAD
     { icon: MapPin, text: "GSFC UNIVERSITY AUDITORIUM" },
     { icon: Radio, text: "LIVE TALENT SHOWCASE" },
     { icon: Sparkles, text: "NAVRATRI SPECIAL EDITION", highlight: true },
+=======
+    { icon: MapPin, text: "AANGANVA, GSFC UNIVERSITY" },
+    { icon: Radio, text: "LIVE TALENT SHOWCASE" },
+    { icon: Sparkles, text: "2026 EDITION", highlight: true },
+>>>>>>> 5d886f7 (Updated Changes)
   ];
 
   return (

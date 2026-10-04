@@ -14,7 +14,11 @@ export default function FaqSection() {
       <div className="max-w-4xl mx-auto">
         
         {/* Header */}
+<<<<<<< HEAD
         <div className="text-center mb-10 sm:mb-16">
+=======
+        <div data-reveal className="text-center mb-10 sm:mb-16">
+>>>>>>> 5d886f7 (Updated Changes)
           <div className="inline-flex items-center gap-2 text-xs font-mono tracking-widest text-[#C96B35] uppercase mb-3">
             <HelpCircle className="w-4 h-4 text-[#C96B35]" />
             <span>GOT QUESTIONS?</span>
@@ -28,7 +32,11 @@ export default function FaqSection() {
         </div>
 
         {/* Accordion List */}
+<<<<<<< HEAD
         <div className="space-y-3 sm:space-y-4">
+=======
+        <div data-reveal className="space-y-3 sm:space-y-4">
+>>>>>>> 5d886f7 (Updated Changes)
           {FAQS.map((faq, idx) => {
             const isOpen = openIndex === idx;
 
@@ -41,6 +49,10 @@ export default function FaqSection() {
                     : 'bg-[#101014] border-[#C49A3A]/15 hover:border-[#C49A3A]/30'
                 }`}
               >
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5d886f7 (Updated Changes)
                 <button
                   onClick={() => toggleFaq(idx)}
                   className="w-full text-left p-4 sm:p-6 flex items-center justify-between gap-3 focus:outline-none min-h-[52px]"

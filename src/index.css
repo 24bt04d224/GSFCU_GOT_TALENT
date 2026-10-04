@@ -1,6 +1,11 @@
 @import "tailwindcss";
 
 :root {
+<<<<<<< HEAD
+=======
+  --navbar-height: 80px;
+
+>>>>>>> 5d886f7 (Updated Changes)
   /* Physical Event Decoration Palette */
   --terracotta: #B65A3A;
   --rust-orange: #C96B35;
@@ -104,3 +109,233 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #C96B35;
 }
+<<<<<<< HEAD
+=======
+
+/* Print & PDF Single-Page Isolation Rules */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  html, body {
+    background-color: #08080a !important;
+    color: #F4E7D0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide all elements on page */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Reveal only the printable pass card */
+  .printable-pass-target,
+  .printable-pass-target * {
+    visibility: visible !important;
+  }
+
+  .printable-pass-target {
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 90% !important;
+    max-width: 480px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .print\:hidden,
+  button,
+  a {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+
+/* ==========================================
+   Subtle Modern Animations & Micro-interactions
+   ========================================== */
+
+/* 1. Scroll Reveal Engine */
+.reveal-on-scroll,
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-on-scroll.revealed,
+[data-reveal].revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger Delays */
+.reveal-delay-1, [data-reveal-delay="1"] { transition-delay: 0.08s; }
+.reveal-delay-2, [data-reveal-delay="2"] { transition-delay: 0.16s; }
+.reveal-delay-3, [data-reveal-delay="3"] { transition-delay: 0.24s; }
+.reveal-delay-4, [data-reveal-delay="4"] { transition-delay: 0.32s; }
+.reveal-delay-5, [data-reveal-delay="5"] { transition-delay: 0.40s; }
+
+/* 2. Micro-interactions & Card Hover Effects */
+.hover-lift {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.5), 0 0 20px -5px rgba(201, 107, 53, 0.2);
+}
+
+.hover-lift:active {
+  transform: translateY(-1px) scale(0.995);
+}
+
+.btn-hover-subtle {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.2s ease;
+}
+
+.btn-hover-subtle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px -4px rgba(201, 107, 53, 0.35);
+}
+
+.btn-hover-subtle:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* 3. Page Load & Hero Entrance Keyframes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-hero-fade-in {
+  animation: fadeInUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-hero-stagger-1 {
+  animation: fadeInUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.12s forwards;
+  opacity: 0;
+}
+
+.animate-hero-stagger-2 {
+  animation: fadeInUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.24s forwards;
+  opacity: 0;
+}
+
+.animate-hero-stagger-3 {
+  animation: fadeInUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.36s forwards;
+  opacity: 0;
+}
+
+/* 4. Modal Entrance Animations */
+@keyframes modalBackdropFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-modal-backdrop {
+  animation: modalBackdropFade 0.25s ease-out forwards;
+}
+
+.animate-modal-content {
+  animation: modalPopIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 5. Pass & QR Code Scale-In Animation */
+.animate-pass-in {
+  animation: modalPopIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 6. Subtle WhatsApp Attention Pulse */
+@keyframes whatsappSubtlePulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.35);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 6px rgba(37, 211, 102, 0);
+  }
+}
+
+.animate-whatsapp-pulse {
+  animation: whatsappSubtlePulse 3s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+/* 7. Accessibility - Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-on-scroll,
+  [data-reveal],
+  .animate-hero-fade-in,
+  .animate-hero-stagger-1,
+  .animate-hero-stagger-2,
+  .animate-hero-stagger-3,
+  .animate-modal-backdrop,
+  .animate-modal-content,
+  .animate-pass-in,
+  .animate-whatsapp-pulse {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .hover-lift:hover,
+  .btn-hover-subtle:hover {
+    transform: none !important;
+  }
+}
+
+>>>>>>> 5d886f7 (Updated Changes)
