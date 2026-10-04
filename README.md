@@ -1,4 +1,5 @@
-# 🎭 GSFCU Got Talent 2026 — Navratri Special Edition
+# 🎭 GSFCU Got Talent 2026
+
 
 The official web platform and audition management portal for **GSFC University Got Talent 2026**.
 

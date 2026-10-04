@@ -1,7 +1,8 @@
 # GSFCU Got Talent — Master Project & Agent Guidelines
 
 ## 1. Project Overview & Context
-- **Project Name**: GSFCU Got Talent 2026 (Navratri Special Edition)
+- **Project Name**: GSFCU Got Talent 2026
+
 - **Repository**: `https://github.com/24bt04d224/GSFCU_GOT_TALENT.git`
 - **Master Workspace Integration**: Connected with Master Folder workflow for centralized management, tracking, and future feature rollouts.
 - **Tech Stack**:

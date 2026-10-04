@@ -12,7 +12,8 @@ import {
 import { EVENT_DETAILS, TALENT_CATEGORIES } from '../data/eventData';
 import { 
   User, Sparkles, ArrowRight, ArrowLeft, MessageSquare, ExternalLink, ShieldCheck, 
-  CheckCircle2, QrCode, AlertCircle, Music, Upload, Play, Pause, FileAudio, Mail, Loader2
+  CheckCircle2, QrCode, AlertCircle, Music, Upload, Play, Pause, FileAudio, Mail, Loader2, Plus, Trash2, Users
+
 } from 'lucide-react';
 
 export default function RegisterPage() {
@@ -38,12 +39,17 @@ export default function RegisterPage() {
     phone: '',
     email: '',
     category: 'singing',
-    participationType: 'Solo',
+    participationType: 'Solo', // 'Solo' | 'Duo' | 'Team'
+
     performanceName: '',
     numParticipants: '1',
     description: '',
     driveLink: '',
   });
+
+  // Additional team members array (for Duo and Team formats)
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [memberErrors, setMemberErrors] = useState({});
 
   const [errors, setErrors] = useState({});
 
@@ -54,6 +60,63 @@ export default function RegisterPage() {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
   };
+
+  const handleFormatChange = (e) => {
+    const newFormat = e.target.value;
+    const oldFormat = formData.participationType;
+
+    if (newFormat === oldFormat) return;
+
+    if (newFormat === 'Solo') {
+      if (teamMembers.length > 0 && teamMembers.some(m => m.name.trim() || m.enrollmentNumber.trim())) {
+        const confirmChange = window.confirm(
+          "Changing to Solo will remove the additional performer details from this registration. Continue?"
+        );
+        if (!confirmChange) return;
+      }
+      setTeamMembers([]);
+      setMemberErrors({});
+    } else if (newFormat === 'Duo') {
+      if (teamMembers.length > 0) {
+        setTeamMembers([teamMembers[0]]);
+      } else {
+        setTeamMembers([{ name: '', enrollmentNumber: '' }]);
+      }
+    } else if (newFormat === 'Team') {
+      if (teamMembers.length === 0) {
+        setTeamMembers([{ name: '', enrollmentNumber: '' }]);
+      }
+    }
+
+    setFormData((prev) => ({ ...prev, participationType: newFormat }));
+  };
+
+  const addTeamMember = () => {
+    if (1 + teamMembers.length >= 10) return;
+    setTeamMembers((prev) => [...prev, { name: '', enrollmentNumber: '' }]);
+  };
+
+  const removeTeamMember = (indexToRemove) => {
+    setTeamMembers((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+    setMemberErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[indexToRemove];
+      return copy;
+    });
+  };
+
+  const updateTeamMember = (index, field, value) => {
+    setTeamMembers((prev) =>
+      prev.map((m, idx) => (idx === index ? { ...m, [field]: value } : m))
+    );
+    if (memberErrors[index]?.[field]) {
+      setMemberErrors((prev) => ({
+        ...prev,
+        [index]: { ...prev[index], [field]: '' }
+      }));
+    }
+  };
+
 
   const validateStep1 = () => {
     const newErrors = {};
@@ -71,8 +134,45 @@ export default function RegisterPage() {
     if (!formData.performanceName.trim()) newErrors.performanceName = 'Performance title is required';
     if (!formData.description.trim()) newErrors.description = 'Short description is required';
 
+    const newMemberErrors = {};
+    let hasMemberErrors = false;
+
+    if (formData.participationType === 'Duo' || formData.participationType === 'Team') {
+      if (teamMembers.length === 0 && formData.participationType === 'Duo') {
+        setTeamMembers([{ name: '', enrollmentNumber: '' }]);
+      }
+
+      const primaryEnrollment = formData.enrollmentNo.trim().toLowerCase();
+      const seenEnrollments = new Set();
+      if (primaryEnrollment) seenEnrollments.add(primaryEnrollment);
+
+      teamMembers.forEach((m, idx) => {
+        const errs = {};
+        const nameVal = m.name.trim();
+        const enrollVal = m.enrollmentNumber.trim().toLowerCase();
+
+        if (!nameVal) errs.name = 'Full name is required';
+        if (!enrollVal) {
+          errs.enrollmentNumber = 'Enrollment number is required';
+        } else if (enrollVal === primaryEnrollment) {
+          errs.enrollmentNumber = 'Primary participant enrollment number cannot be added as a team member';
+        } else if (seenEnrollments.has(enrollVal)) {
+          errs.enrollmentNumber = 'This student has already been added to the performance.';
+        } else {
+          seenEnrollments.add(enrollVal);
+        }
+
+        if (Object.keys(errs).length > 0) {
+          newMemberErrors[idx] = errs;
+          hasMemberErrors = true;
+        }
+      });
+    }
+
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setMemberErrors(newMemberErrors);
+    return Object.keys(newErrors).length === 0 && !hasMemberErrors;
+
   };
 
   const handleNext = () => {
@@ -94,7 +194,7 @@ export default function RegisterPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate size (max 15MB)
+
     if (file.size > 15 * 1024 * 1024) {
       setErrors((prev) => ({
         ...prev,
@@ -135,10 +235,20 @@ export default function RegisterPage() {
     setSubmitError('');
     setIsSubmitting(true);
     try {
-      const record = await saveRegistration(formData, audioFile);
+      const calcCount = formData.participationType === 'Solo' ? 1 : (1 + teamMembers.length);
+      const payload = {
+        ...formData,
+        participationFormat: formData.participationType.toLowerCase(),
+        teamMembers: formData.participationType === 'Solo' ? [] : teamMembers,
+        numParticipants: calcCount.toString()
+      };
+
+      const record = await saveRegistration(payload, audioFile);
       setRegisteredRecord(record);
       setRegistrationId(record.id);
       setSubmitted(true);
+      setPassModalOpen(true);
+
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
       try {
@@ -162,6 +272,9 @@ export default function RegisterPage() {
     setRegisteredRecord(null);
     setSubmitError('');
     setStep(1);
+    setTeamMembers([]);
+    setMemberErrors({});
+
     setFormData({
       fullName: '',
       enrollmentNo: '',
@@ -182,6 +295,9 @@ export default function RegisterPage() {
     const match = TALENT_CATEGORIES.find((c) => c.id === catId);
     return match ? match.title : catId;
   };
+
+  const currentTotalPerformers = formData.participationType === 'Solo' ? 1 : (1 + teamMembers.length);
+
 
   return (
     <div className="min-h-screen bg-[#08080a] text-[#F4E7D0] flex flex-col font-sans relative overflow-hidden">
@@ -238,7 +354,8 @@ export default function RegisterPage() {
                     <h2 className="font-bebas text-xl sm:text-2xl text-[#F4E7D0] flex items-center gap-2 tracking-wide">
                       <User className="w-4 h-4 sm:w-5 sm:h-5 text-[#C96B35] shrink-0" /> STUDENT IDENTIFICATION
                     </h2>
-                    <p className="text-xs text-[#B5ACA0] font-sans">Enter your verified GSFC University details.</p>
+                    <p className="text-xs text-[#B5ACA0] font-sans">Enter your verified GSFC University details (as Primary Participant / Team Lead).</p>
+
                   </div>
 
                   <div>
@@ -351,7 +468,8 @@ export default function RegisterPage() {
                     <h2 className="font-bebas text-xl sm:text-2xl text-[#F4E7D0] flex items-center gap-2 tracking-wide">
                       <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#C49A3A] shrink-0" /> PERFORMANCE SPECIFICATIONS
                     </h2>
-                    <p className="text-xs text-[#B5ACA0] font-sans">Details about your act and technical needs.</p>
+                    <p className="text-xs text-[#B5ACA0] font-sans">Details about your act, participation format, and stage needs.</p>
+
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -376,15 +494,134 @@ export default function RegisterPage() {
                       <select
                         name="participationType"
                         value={formData.participationType}
-                        onChange={handleChange}
-                        className="w-full bg-[#08080a] border border-[#C49A3A]/25 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] focus:outline-none focus:border-[#C96B35] transition-colors font-sans"
+                        onChange={handleFormatChange}
+                        className="w-full bg-[#08080a] border border-[#C49A3A]/25 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] focus:outline-none focus:border-[#C96B35] transition-colors font-sans font-bold"
                       >
-                        <option value="Solo">Solo Act</option>
+                        <option value="Solo">Solo Act (1 Performer)</option>
                         <option value="Duo">Duo (2 Performers)</option>
-                        <option value="Group">Group Act (3+ Performers)</option>
+                        <option value="Team">Team (3–10 Performers)</option>
+
                       </select>
                     </div>
                   </div>
+
+                  {/* DYNAMIC PERFORMER DETAILS SECTION */}
+                  {/* DUO FORMAT */}
+                  {formData.participationType === 'Duo' && (
+                    <div className="p-4 sm:p-5 rounded-xl bg-[#08080a] border border-[#C49A3A]/25 space-y-4 animate-in fade-in duration-200">
+                      <div className="border-b border-[#C49A3A]/15 pb-2">
+                        <h3 className="font-bebas text-lg text-[#F4E7D0] tracking-wide uppercase flex items-center gap-2">
+                          <User className="w-4 h-4 text-[#C96B35]" /> PERFORMANCE PARTNER
+                        </h3>
+                        <p className="text-xs text-[#B5ACA0] font-sans">Enter the details of your performance partner.</p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-mono text-[#F4E7D0] uppercase mb-2">Partner Full Name *</label>
+                          <input
+                            type="text"
+                            value={teamMembers[0]?.name || ''}
+                            onChange={(e) => updateTeamMember(0, 'name', e.target.value)}
+                            placeholder="e.g. Rahul Patel"
+                            className="w-full bg-[#0f0e13] border border-[#C49A3A]/25 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] placeholder-[#B5ACA0]/50 focus:outline-none focus:border-[#C96B35] font-sans"
+                          />
+                          {memberErrors[0]?.name && <p className="text-xs text-red-400 mt-1 font-mono">{memberErrors[0].name}</p>}
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-mono text-[#F4E7D0] uppercase mb-2">Partner Enrollment Number *</label>
+                          <input
+                            type="text"
+                            value={teamMembers[0]?.enrollmentNumber || ''}
+                            onChange={(e) => updateTeamMember(0, 'enrollmentNumber', e.target.value)}
+                            placeholder="e.g. 230101051"
+                            className="w-full bg-[#0f0e13] border border-[#C49A3A]/25 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] placeholder-[#B5ACA0]/50 focus:outline-none focus:border-[#C96B35] font-mono"
+                          />
+                          {memberErrors[0]?.enrollmentNumber && <p className="text-xs text-red-400 mt-1 font-mono">{memberErrors[0].enrollmentNumber}</p>}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TEAM FORMAT */}
+                  {formData.participationType === 'Team' && (
+                    <div className="p-4 sm:p-5 rounded-xl bg-[#08080a] border border-[#C49A3A]/25 space-y-4 animate-in fade-in duration-200">
+                      <div className="flex items-center justify-between border-b border-[#C49A3A]/15 pb-2">
+                        <div>
+                          <h3 className="font-bebas text-lg text-[#F4E7D0] tracking-wide uppercase flex items-center gap-2">
+                            <Users className="w-4 h-4 text-[#C96B35]" /> TEAM MEMBERS
+                          </h3>
+                          <p className="text-xs text-[#B5ACA0] font-sans">Add everyone performing on stage with you (Team Lead is already included).</p>
+                        </div>
+                        <span className="font-mono text-xs text-[#C96B35] font-bold px-3 py-1 rounded-full bg-[#C96B35]/15 border border-[#C96B35]/30">
+                          {currentTotalPerformers} / 10 PERFORMERS
+                        </span>
+                      </div>
+
+                      {teamMembers.map((member, idx) => (
+                        <div key={idx} className="p-4 rounded-lg bg-[#0f0e13] border border-[#C49A3A]/20 relative space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono text-xs text-[#C49A3A] font-bold uppercase">
+                              TEAM MEMBER 0{idx + 1}
+                            </span>
+                            {teamMembers.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeTeamMember(idx)}
+                                className="text-xs font-mono text-red-400 hover:text-red-300 transition-colors uppercase font-bold flex items-center gap-1"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" /> REMOVE
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-[11px] font-mono text-[#B5ACA0] uppercase mb-1">Member Name *</label>
+                              <input
+                                type="text"
+                                value={member.name}
+                                onChange={(e) => updateTeamMember(idx, 'name', e.target.value)}
+                                placeholder="Enter full name"
+                                className="w-full bg-[#08080a] border border-[#C49A3A]/25 rounded-lg px-3.5 py-2.5 text-xs text-[#F4E7D0] placeholder-[#B5ACA0]/50 focus:outline-none focus:border-[#C96B35] font-sans"
+                              />
+                              {memberErrors[idx]?.name && <p className="text-xs text-red-400 mt-1 font-mono">{memberErrors[idx].name}</p>}
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-mono text-[#B5ACA0] uppercase mb-1">Enrollment Number *</label>
+                              <input
+                                type="text"
+                                value={member.enrollmentNumber}
+                                onChange={(e) => updateTeamMember(idx, 'enrollmentNumber', e.target.value)}
+                                placeholder="Enter enrollment number"
+                                className="w-full bg-[#08080a] border border-[#C49A3A]/25 rounded-lg px-3.5 py-2.5 text-xs text-[#F4E7D0] placeholder-[#B5ACA0]/50 focus:outline-none focus:border-[#C96B35] font-mono"
+                              />
+                              {memberErrors[idx]?.enrollmentNumber && <p className="text-xs text-red-400 mt-1 font-mono">{memberErrors[idx].enrollmentNumber}</p>}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        {currentTotalPerformers < 10 ? (
+                          <button
+                            type="button"
+                            onClick={addTeamMember}
+                            className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-[#C96B35]/20 hover:bg-[#C96B35] text-[#C96B35] hover:text-[#F4E7D0] border border-[#C96B35]/40 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+                          >
+                            <Plus className="w-4 h-4" /> ADD TEAM MEMBER
+                          </button>
+                        ) : (
+                          <span className="text-xs font-mono text-amber-400 font-bold uppercase px-3 py-1.5 rounded bg-amber-950/40 border border-amber-500/30">
+                            Maximum team size reached (10 performers max).
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
 
                   <div>
                     <label className="block text-xs font-mono text-[#F4E7D0] uppercase mb-2">Performance Name / Title *</label>
@@ -400,15 +637,13 @@ export default function RegisterPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono text-[#F4E7D0] uppercase mb-2">Total Performers on Stage</label>
+                    <label className="block text-xs font-mono text-[#F4E7D0] uppercase mb-2">Total Performers on Stage (Auto-Calculated)</label>
                     <input
-                      type="number"
-                      name="numParticipants"
-                      min="1"
-                      max="15"
-                      value={formData.numParticipants}
-                      onChange={handleChange}
-                      className="w-full bg-[#08080a] border border-[#C49A3A]/25 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] focus:outline-none focus:border-[#C96B35] transition-colors font-mono"
+                      type="text"
+                      readOnly
+                      value={`${currentTotalPerformers} Performer(s)`}
+                      className="w-full bg-[#08080a]/80 border border-[#C49A3A]/25 rounded-lg px-4 py-3 text-sm text-[#C49A3A] font-mono font-bold cursor-not-allowed select-none"
+
                     />
                   </div>
 
@@ -441,7 +676,7 @@ export default function RegisterPage() {
                       Singers, dancers, or skit performers can attach their backing track so sound engineers are prepared ahead of auditions.
                     </p>
 
-                    {/* File Drop / Select Area */}
+
                     {!audioFile ? (
                       <div>
                         <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-[#C49A3A]/30 hover:border-[#C96B35] rounded-xl cursor-pointer bg-[#0f0e13] hover:bg-[#C96B35]/5 transition-all text-center group">
@@ -462,7 +697,7 @@ export default function RegisterPage() {
                         {errors.audioFile && <p className="text-xs text-red-400 mt-2 font-mono">{errors.audioFile}</p>}
                       </div>
                     ) : (
-                      /* Uploaded Audio Preview Card */
+
                       <div className="p-3.5 sm:p-4 rounded-lg bg-[#14141c] border border-[#C96B35]/40 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-[#C96B35]/20 flex items-center justify-center text-[#C96B35] shrink-0">
@@ -509,7 +744,7 @@ export default function RegisterPage() {
                       </div>
                     )}
 
-                    {/* Alternate Google Drive Link */}
+
                     <div>
                       <label className="block text-[11px] font-mono text-[#B5ACA0] uppercase mb-1">
                         OR GOOGLE DRIVE / CLOUD AUDIO LINK (OPTIONAL)
@@ -547,17 +782,27 @@ export default function RegisterPage() {
               {/* STEP 03: REVIEW & SUBMIT */}
               {step === 3 && (
                 <div className="space-y-5 sm:space-y-6">
-                  <div className="border-b border-[#C49A3A]/20 pb-4 mb-4 sm:mb-6">
-                    <h2 className="font-bebas text-xl sm:text-2xl text-[#F4E7D0] flex items-center gap-2 tracking-wide">
-                      <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#C96B35] shrink-0" /> REVIEW SUMMARY
-                    </h2>
-                    <p className="text-xs text-[#B5ACA0] font-sans">Confirm your entry before final submission.</p>
+                  <div className="border-b border-[#C49A3A]/20 pb-4 mb-4 sm:mb-6 flex items-center justify-between">
+                    <div>
+                      <h2 className="font-bebas text-xl sm:text-2xl text-[#F4E7D0] flex items-center gap-2 tracking-wide">
+                        <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#C96B35] shrink-0" /> REVIEW SUMMARY
+                      </h2>
+                      <p className="text-xs text-[#B5ACA0] font-sans">Confirm your entry before final submission.</p>
+                    </div>
+                    <span className="font-mono text-xs text-[#C49A3A] font-bold px-3 py-1 rounded bg-[#C49A3A]/10 border border-[#C49A3A]/30 uppercase">
+                      TOTAL PERFORMERS: {currentTotalPerformers}
+                    </span>
                   </div>
 
                   <div className="space-y-4 font-sans text-xs">
+                    
+                    {/* PRIMARY PARTICIPANT / TEAM LEAD */}
                     <div className="p-4 rounded-lg bg-[#08080a] border border-[#C49A3A]/20 space-y-2">
                       <div className="flex items-center justify-between border-b border-[#C49A3A]/15 pb-2">
-                        <span className="font-mono text-[#C49A3A] uppercase font-bold">STUDENT DETAILS</span>
+                        <span className="font-mono text-[#C49A3A] uppercase font-bold">
+                          {formData.participationType === 'Team' ? 'PRIMARY PARTICIPANT / TEAM LEAD' : 'PRIMARY PARTICIPANT'}
+                        </span>
+
                         <button onClick={() => setStep(1)} className="text-[11px] text-[#C96B35] font-mono hover:underline p-1">EDIT</button>
                       </div>
                       <p><span className="text-[#B5ACA0]">Full Name:</span> <strong className="text-[#F4E7D0]">{formData.fullName}</strong></p>
@@ -566,14 +811,49 @@ export default function RegisterPage() {
                       <p className="break-all"><span className="text-[#B5ACA0]">Contact:</span> <span className="text-[#F4E7D0]">{formData.phone}</span> | <span className="text-[#F4E7D0]">{formData.email}</span></p>
                     </div>
 
+                    {/* DUO / TEAM MEMBERS ROSTER */}
+                    {formData.participationType === 'Duo' && teamMembers.length > 0 && (
+                      <div className="p-4 rounded-lg bg-[#08080a] border border-[#C49A3A]/20 space-y-2">
+                        <div className="flex items-center justify-between border-b border-[#C49A3A]/15 pb-2">
+                          <span className="font-mono text-[#C96B35] uppercase font-bold">PERFORMANCE PARTNER</span>
+                          <button onClick={() => setStep(2)} className="text-[11px] text-[#C96B35] font-mono hover:underline p-1">EDIT</button>
+                        </div>
+                        <p><span className="text-[#B5ACA0]">Partner Name:</span> <strong className="text-[#F4E7D0]">{teamMembers[0].name}</strong></p>
+                        <p><span className="text-[#B5ACA0]">Partner Enrollment:</span> <strong className="text-[#F4E7D0] font-mono">{teamMembers[0].enrollmentNumber}</strong></p>
+                      </div>
+                    )}
+
+                    {formData.participationType === 'Team' && teamMembers.length > 0 && (
+                      <div className="p-4 rounded-lg bg-[#08080a] border border-[#C49A3A]/20 space-y-2">
+                        <div className="flex items-center justify-between border-b border-[#C49A3A]/15 pb-2">
+                          <span className="font-mono text-[#C96B35] uppercase font-bold">TEAM MEMBERS ({teamMembers.length})</span>
+                          <button onClick={() => setStep(2)} className="text-[11px] text-[#C96B35] font-mono hover:underline p-1">EDIT</button>
+                        </div>
+                        <ul className="space-y-2 pt-1">
+                          {teamMembers.map((m, idx) => (
+                            <li key={idx} className="flex items-center justify-between p-2 rounded bg-[#0f0e13] border border-white/5 font-mono text-xs">
+                              <span className="text-[#F4E7D0] font-bold">
+                                0{idx + 1} — {m.name}
+                              </span>
+                              <span className="text-[#C49A3A] font-semibold">{m.enrollmentNumber}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* PERFORMANCE DETAILS */}
+
                     <div className="p-4 rounded-lg bg-[#08080a] border border-[#C49A3A]/20 space-y-2">
                       <div className="flex items-center justify-between border-b border-[#C49A3A]/15 pb-2">
                         <span className="font-mono text-[#C49A3A] uppercase font-bold">PERFORMANCE DETAILS</span>
                         <button onClick={() => setStep(2)} className="text-[11px] text-[#C96B35] font-mono hover:underline p-1">EDIT</button>
                       </div>
-                      <p><span className="text-[#B5ACA0]">Category:</span> <strong className="text-[#F4E7D0] font-bebas text-base uppercase tracking-wide">{getCategoryTitle(formData.category)}</strong> ({formData.participationType})</p>
+                      <p><span className="text-[#B5ACA0]">Format:</span> <strong className="text-[#C96B35] uppercase">{formData.participationType} Act</strong></p>
+                      <p><span className="text-[#B5ACA0]">Category:</span> <strong className="text-[#F4E7D0] font-bebas text-base uppercase tracking-wide">{getCategoryTitle(formData.category)}</strong></p>
                       <p><span className="text-[#B5ACA0]">Title:</span> <span className="text-[#C96B35] font-bold">{formData.performanceName}</span></p>
-                      <p><span className="text-[#B5ACA0]">Performers:</span> <span className="text-[#F4E7D0] font-mono">{formData.numParticipants} Person(s)</span></p>
+                      <p><span className="text-[#B5ACA0]">Total Performers:</span> <span className="text-[#F4E7D0] font-mono font-bold">{currentTotalPerformers} Person(s)</span></p>
+
                       <p><span className="text-[#B5ACA0]">Description:</span> <span className="text-[#F4E7D0]">{formData.description}</span></p>
 
                       {(audioFile || formData.driveLink) && (
@@ -634,7 +914,8 @@ export default function RegisterPage() {
             </div>
           ) : (
             /* SUCCESS STATE SCREEN */
-            <div className="bg-[#0f0e13] border border-[#C96B35]/40 rounded-2xl p-6 sm:p-12 text-center shadow-2xl relative overflow-hidden">
+            <div className="bg-[#0f0e13] border border-[#C96B35]/40 rounded-2xl p-6 sm:p-12 text-center shadow-2xl relative overflow-hidden animate-modal-content">
+
               
               <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#68734A]/15 border border-[#68734A]/30 mx-auto mb-4 sm:mb-6 flex items-center justify-center text-[#68734A]">
                 <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8" />
@@ -658,10 +939,14 @@ export default function RegisterPage() {
                 <span className="font-bebas text-3xl sm:text-4xl text-[#C96B35] tracking-wider block">
                   {registrationId}
                 </span>
+                <span className="text-[10px] font-mono text-[#F4E7D0] block mt-1">
+                  FORMAT: <span className="text-[#C96B35] font-bold uppercase">{registeredRecord?.participationType || 'SOLO'}</span> ({registeredRecord?.numParticipants || 1} PERFORMER)
+                </span>
               </div>
 
               {/* Digital VIP Entry Pass Callout */}
-              <div className="max-w-md mx-auto mb-6 sm:mb-8 p-5 rounded-xl bg-gradient-to-r from-[#C96B35]/15 via-[#C49A3A]/10 to-[#B65A3A]/15 border border-[#C96B35]/40 text-center">
+              <div className="max-w-md mx-auto mb-6 sm:mb-8 p-5 rounded-xl bg-gradient-to-r from-[#C96B35]/15 via-[#C49A3A]/10 to-[#B65A3A]/15 border border-[#C96B35]/40 text-center hover-lift">
+
                 <div className="flex items-center justify-center gap-2 mb-2 text-[#C49A3A]">
                   <QrCode className="w-5 h-5 text-[#C96B35]" />
                   <span className="font-mono text-xs uppercase font-bold tracking-wider">OFFICIAL PASS READY</span>
@@ -672,7 +957,8 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setPassModalOpen(true)}
-                  className="w-full bg-[#C96B35] hover:bg-[#B65A3A] text-[#F4E7D0] font-mono font-bold text-xs uppercase tracking-wider py-3.5 px-6 rounded-md flex items-center justify-center gap-2 transition-all shadow-xl hover:scale-[1.01] border border-[#C96B35] min-h-[44px]"
+                  className="w-full bg-[#C96B35] hover:bg-[#B65A3A] text-[#F4E7D0] font-mono font-bold text-xs uppercase tracking-wider py-3.5 px-6 rounded-md flex items-center justify-center gap-2 transition-all shadow-xl hover:scale-[1.01] border border-[#C96B35] min-h-[44px] btn-hover-subtle"
+
                 >
                   <QrCode className="w-4 h-4" /> VIEW OFFICIAL DIGITAL PASS & QR TICKET
                 </button>
@@ -685,7 +971,8 @@ export default function RegisterPage() {
                     href={generateWhatsAppLink(registeredRecord)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-3.5 rounded-xl bg-[#0f1712] border border-emerald-500/30 hover:border-emerald-500/60 flex items-center gap-3 transition-colors group"
+                    className="p-3.5 rounded-xl bg-[#0f1712] border border-emerald-500/30 hover:border-emerald-500/60 flex items-center gap-3 transition-colors group btn-hover-subtle"
+
                   >
                     <div className="w-9 h-9 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                       <MessageSquare className="w-4 h-4" />
@@ -698,7 +985,8 @@ export default function RegisterPage() {
 
                   <a
                     href={generateEmailLink(registeredRecord)}
-                    className="p-3.5 rounded-xl bg-[#14141c] border border-[#C49A3A]/30 hover:border-[#C49A3A]/60 flex items-center gap-3 transition-colors group"
+                    className="p-3.5 rounded-xl bg-[#14141c] border border-[#C49A3A]/30 hover:border-[#C49A3A]/60 flex items-center gap-3 transition-colors group btn-hover-subtle"
+
                   >
                     <div className="w-9 h-9 rounded-full bg-[#C49A3A]/20 flex items-center justify-center text-[#C49A3A] shrink-0">
                       <Mail className="w-4 h-4" />
@@ -711,27 +999,36 @@ export default function RegisterPage() {
                 </div>
               )}
 
-              {/* WhatsApp Callout */}
-              <div className="p-4 sm:p-6 rounded-xl bg-[#0f1712] border border-emerald-500/30 mb-6 sm:mb-8 max-w-md mx-auto text-left">
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-                    <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
+              {/* WhatsApp Group Invitation */}
+              <div className="p-5 sm:p-6 rounded-xl bg-[#0f1712] border border-emerald-500/35 mb-6 sm:mb-8 max-w-md mx-auto text-left shadow-xl hover-lift">
+                <div className="flex items-start gap-3.5">
+                  <div className="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5 animate-whatsapp-pulse">
+                    <MessageSquare className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-bebas text-base sm:text-lg text-[#F4E7D0] tracking-wide">Join Official Audition Updates Group</h3>
-                    <p className="text-[11px] sm:text-xs text-[#B5ACA0] font-sans">Receive instant reporting schedules and stage rules.</p>
+                    <h3 className="font-bebas text-xl sm:text-2xl text-[#F4E7D0] tracking-wide uppercase leading-tight">
+                      Join the Official WhatsApp Group
+                    </h3>
+                    <p className="text-xs sm:text-sm text-[#B5ACA0] font-sans leading-relaxed mt-1">
+                      Stay updated with event announcements, important information, and updates.
+                    </p>
+
                   </div>
                 </div>
 
                 <a
-                  href={EVENT_DETAILS.whatsappGroupUrl}
+                  href="https://chat.whatsapp.com/LETsJjET2As6fXFHCA8iAh"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-[#F4E7D0] font-mono font-bold text-xs uppercase tracking-wider py-3 px-4 rounded-md flex items-center justify-center gap-2 transition-colors shadow-lg min-h-[44px]"
+                  className="mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-[#F4E7D0] font-mono font-bold text-xs uppercase tracking-wider py-3.5 px-5 rounded-md flex items-center justify-center gap-2 transition-all shadow-lg hover:scale-[1.01] border border-emerald-500/50 min-h-[44px] cursor-pointer btn-hover-subtle animate-whatsapp-pulse"
                 >
-                  JOIN THE OFFICIAL WHATSAPP GROUP <ExternalLink className="w-4 h-4" />
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Join WhatsApp Group</span>
+                  <ExternalLink className="w-3.5 h-3.5 ml-0.5" />
                 </a>
               </div>
+
+
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">

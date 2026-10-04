@@ -8,10 +8,15 @@ import HowItWorksSection from '../sections/HowItWorksSection';
 import ImportantInfoSection from '../sections/ImportantInfoSection';
 import RulesSection from '../sections/RulesSection';
 import FaqSection from '../sections/FaqSection';
+import SponsorsSection from '../sections/SponsorsSection';
 import RegistrationCtaSection from '../sections/RegistrationCtaSection';
 import Footer from '../components/Footer';
+import { useScrollReveal } from '../hooks/useScrollReveal';
 
 export default function LandingPage() {
+  useScrollReveal();
+
+
   return (
     <div className="min-h-screen bg-[#08080a] text-[#F4E7D0] flex flex-col font-sans">
       <Navbar />
@@ -24,10 +29,14 @@ export default function LandingPage() {
         <ImportantInfoSection />
         <RulesSection />
         <FaqSection />
+        <SponsorsSection />
+
         <RegistrationCtaSection />
       </main>
       <Footer />
     </div>
   );
 }
+
+
   
