@@ -137,12 +137,21 @@ export default function AdminPage() {
         setSponsors(freshData);
       });
 
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+          handleSyncCloud();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
       return () => {
         if (unsubscribeRegs) unsubscribeRegs();
         if (unsubscribeSponsors) unsubscribeSponsors();
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
       };
     }
   }, [canAccessPortal]);
+
 
 
   const handleLoginSubmit = async (e) => {

@@ -102,18 +102,43 @@ export const fetchRegistrationsFromCloud = async () => {
 /**
  * Realtime Subscription for Registrations Table
  */
+/**
+ * Realtime Subscription for Registrations Table
+ */
 export const subscribeToRegistrations = (onDataChanged) => {
-  const handleLocalUpdate = () => {
-    onDataChanged(getRegistrations());
+  const handleLocalUpdate = async () => {
+    if (isSupabaseConfigured() && supabase) {
+      const freshData = await fetchRegistrationsFromCloud();
+      onDataChanged(freshData);
+    } else {
+      onDataChanged(getRegistrations());
+    }
+  };
+
+  const handleBroadcast = (event) => {
+    if (event?.data?.type === 'REGISTRATIONS_UPDATED' || event?.data === 'registrationsUpdated') {
+      handleLocalUpdate();
+    }
   };
 
   window.addEventListener('registrationsUpdated', handleLocalUpdate);
   window.addEventListener('storage', handleLocalUpdate);
 
+  let bc;
+  if (typeof BroadcastChannel !== 'undefined') {
+    try {
+      bc = new BroadcastChannel('gsfcu_registrations_channel');
+      bc.onmessage = handleBroadcast;
+    } catch (e) {
+      console.warn("BroadcastChannel initialization notice:", e);
+    }
+  }
+
   if (!isSupabaseConfigured() || !supabase) {
     return () => {
       window.removeEventListener('registrationsUpdated', handleLocalUpdate);
       window.removeEventListener('storage', handleLocalUpdate);
+      if (bc) bc.close();
     };
   }
 
@@ -133,6 +158,7 @@ export const subscribeToRegistrations = (onDataChanged) => {
     supabase.removeChannel(channel);
     window.removeEventListener('registrationsUpdated', handleLocalUpdate);
     window.removeEventListener('storage', handleLocalUpdate);
+    if (bc) bc.close();
   };
 };
 
@@ -140,8 +166,13 @@ export const subscribeToRegistrations = (onDataChanged) => {
  * Realtime Subscription for Sponsors Table
  */
 export const subscribeToSponsors = (onDataChanged) => {
-  const handleLocalUpdate = () => {
-    onDataChanged(getSponsors());
+  const handleLocalUpdate = async () => {
+    if (isSupabaseConfigured() && supabase) {
+      const freshData = await fetchSponsorsFromCloud();
+      onDataChanged(freshData);
+    } else {
+      onDataChanged(getSponsors());
+    }
   };
 
   window.addEventListener('sponsorsUpdated', handleLocalUpdate);
@@ -177,6 +208,15 @@ const notifyRegistrationsChanged = () => {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new Event('registrationsUpdated'));
     window.dispatchEvent(new Event('storage'));
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        const bc = new BroadcastChannel('gsfcu_registrations_channel');
+        bc.postMessage({ type: 'REGISTRATIONS_UPDATED', timestamp: Date.now() });
+        setTimeout(() => bc.close(), 100);
+      } catch (e) {
+        console.warn("BroadcastChannel notify notice:", e);
+      }
+    }
   }
 };
 
@@ -227,16 +267,32 @@ export const uploadAudioTrack = async (file, candidateId) => {
  * Save Registration (Dual Engine: Supabase Cloud + LocalStorage)
  */
 export const saveRegistration = async (data, audioFile = null) => {
-  const current = getRegistrations();
+  let current = getRegistrations();
 
-  // Duplicate Check for Primary Participant
+  // 1. Duplicate Check for Primary Participant in cloud & local
+  if (isSupabaseConfigured() && supabase) {
+    try {
+      const { data: cloudItems } = await supabase
+        .from('registrations')
+        .select('id, enrollment_no')
+        .ilike('enrollment_no', data.enrollmentNo.trim());
 
-  const existing = current.find(
+      if (cloudItems && cloudItems.length > 0) {
+        throw new Error(`Enrollment number ${data.enrollmentNo} is already registered under ID ${cloudItems[0].id}.`);
+      }
+    } catch (err) {
+      if (err.message && err.message.includes('already registered')) {
+        throw err;
+      }
+    }
+  }
+
+  const existingLocal = current.find(
     (item) => item.enrollmentNo.toLowerCase().trim() === data.enrollmentNo.toLowerCase().trim()
   );
 
-  if (existing) {
-    throw new Error(`Enrollment number ${data.enrollmentNo} is already registered under ID ${existing.id}.`);
+  if (existingLocal) {
+    throw new Error(`Enrollment number ${data.enrollmentNo} is already registered under ID ${existingLocal.id}.`);
   }
 
   const randomNum = Math.floor(1000 + Math.random() * 9000);
@@ -273,43 +329,51 @@ export const saveRegistration = async (data, audioFile = null) => {
     registeredAt: new Date().toISOString()
   };
 
-  // 1. Save to Supabase if configured
+  // 2. Save to Supabase if configured
   if (isSupabaseConfigured() && supabase) {
-    try {
-      const { error } = await supabase.from('registrations').insert({
-        id: newRegistration.id,
-        full_name: newRegistration.fullName,
-        enrollment_no: newRegistration.enrollmentNo,
-        school_dept: newRegistration.schoolDept,
-        semester: newRegistration.semester,
-        phone: newRegistration.phone,
-        email: newRegistration.email,
-        category: newRegistration.category,
-        participation_type: newRegistration.participationType,
-        participation_format: newRegistration.participationFormat,
-        team_members: JSON.stringify(newRegistration.teamMembers),
+    const fullPayload = {
+      id: newRegistration.id,
+      full_name: newRegistration.fullName,
+      enrollment_no: newRegistration.enrollmentNo,
+      school_dept: newRegistration.schoolDept,
+      semester: newRegistration.semester,
+      phone: newRegistration.phone,
+      email: newRegistration.email,
+      category: newRegistration.category,
+      participation_type: newRegistration.participationType,
+      participation_format: newRegistration.participationFormat,
+      team_members: JSON.stringify(newRegistration.teamMembers),
+      performance_name: newRegistration.performanceName,
+      num_participants: String(newRegistration.numParticipants),
+      description: newRegistration.description,
+      track_url: newRegistration.trackUrl,
+      track_file_name: newRegistration.trackFileName,
+      drive_link: newRegistration.driveLink,
+      status: newRegistration.status,
+      checked_in: newRegistration.checkedIn,
+      created_at: newRegistration.registeredAt
+    };
 
-        performance_name: newRegistration.performanceName,
-        num_participants: newRegistration.numParticipants,
-        description: newRegistration.description,
-        track_url: newRegistration.trackUrl,
-        track_file_name: newRegistration.trackFileName,
-        drive_link: newRegistration.driveLink,
-        status: newRegistration.status,
-        checked_in: newRegistration.checkedIn,
-        created_at: newRegistration.registeredAt
-      });
+    let { error } = await supabase.from('registrations').insert(fullPayload);
 
-      if (error) {
-        console.warn("Supabase insert error (saving locally instead):", error);
-      }
-    } catch (e) {
-      console.warn("Supabase cloud insert exception:", e);
+    // Fallback if DB schema lacks participation_format or team_members
+    if (error && (error.code === 'PGRST204' || (error.message && error.message.includes('column')))) {
+      console.warn("Retrying insert without optional schema columns:", error.message);
+      const basePayload = { ...fullPayload };
+      delete basePayload.participation_format;
+      delete basePayload.team_members;
+      const retry = await supabase.from('registrations').insert(basePayload);
+      error = retry.error;
+    }
+
+    if (error) {
+      console.error("Supabase registration insert error:", error);
+      throw new Error(`Database error: ${error.message || 'Unable to complete registration.'}`);
     }
   }
 
-  // 2. Always persist locally
-  const updated = [newRegistration, ...current];
+  // 3. Always persist locally
+  const updated = [newRegistration, ...current.filter(item => item.id !== newRegistration.id)];
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   } catch (e) {
@@ -348,7 +412,7 @@ export const updateRegistrationRecord = async (id, updatedFields) => {
     try {
       const target = updated.find(r => r.id === id);
       if (target) {
-        await supabase.from('registrations').update({
+        const payloadToUpdate = {
           full_name: target.fullName,
           enrollment_no: target.enrollmentNo,
           school_dept: target.schoolDept,
@@ -360,9 +424,16 @@ export const updateRegistrationRecord = async (id, updatedFields) => {
           participation_format: target.participationFormat,
           team_members: JSON.stringify(target.teamMembers || []),
           performance_name: target.performanceName,
-          num_participants: target.numParticipants,
+          num_participants: String(target.numParticipants),
           description: target.description
-        }).eq('id', id);
+        };
+
+        let { error } = await supabase.from('registrations').update(payloadToUpdate).eq('id', id);
+        if (error && (error.code === 'PGRST204' || (error.message && error.message.includes('column')))) {
+          delete payloadToUpdate.participation_format;
+          delete payloadToUpdate.team_members;
+          await supabase.from('registrations').update(payloadToUpdate).eq('id', id);
+        }
       }
     } catch (e) {
       console.warn("Supabase update exception:", e);
@@ -446,12 +517,20 @@ export const processQrCheckIn = async (qrInput) => {
     return { status: 'INVALID_QR', message: 'Could not extract valid registration ID' };
   }
 
-  const current = getRegistrations();
-  const target = current.find((item) => 
+  let current = getRegistrations();
+  let target = current.find((item) => 
     item.id.toUpperCase() === targetId.toUpperCase() ||
     (item.enrollmentNo && item.enrollmentNo.toLowerCase().trim() === targetId.toLowerCase().trim())
   );
 
+  if (!target && isSupabaseConfigured() && supabase) {
+    const freshCloud = await fetchRegistrationsFromCloud();
+    current = freshCloud;
+    target = current.find((item) => 
+      item.id.toUpperCase() === targetId.toUpperCase() ||
+      (item.enrollmentNo && item.enrollmentNo.toLowerCase().trim() === targetId.toLowerCase().trim())
+    );
+  }
 
   if (!target) {
     return {
