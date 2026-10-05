@@ -6,7 +6,20 @@
  */
 
 import { supabase, isSupabaseConfigured } from './supabaseClient';
+import {
+  isBackendConfigured,
+  fetchRegistrationsFromBackend,
+  saveRegistrationToBackend,
+  checkInParticipantOnBackend,
+  updateRegistrationOnBackend,
+  fetchSponsorsFromBackend,
+  getBackendUrl,
+  setBackendUrl,
+  checkBackendHealth
+} from './backendClient';
 import { EVENT_DETAILS } from '../data/eventData';
+
+export { isBackendConfigured, getBackendUrl, setBackendUrl, checkBackendHealth };
 
 const STORAGE_KEY = 'gsfcu_got_talent_2026_registrations';
 
@@ -34,6 +47,21 @@ export const getRegistrations = () => {
  * Fetch registrations from Supabase Cloud (if connected), else fallback to localStorage
  */
 export const fetchRegistrationsFromCloud = async () => {
+  // 1. Try Render Backend first if configured
+  if (isBackendConfigured()) {
+    try {
+      const backendData = await fetchRegistrationsFromBackend();
+      if (backendData && Array.isArray(backendData)) {
+        const cleaned = backendData.filter(item => !LEGACY_SAMPLE_IDS.includes(item.id));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
+        return cleaned;
+      }
+    } catch (err) {
+      console.warn("Render backend fetch error, trying next engine:", err);
+    }
+  }
+
+  // 2. Try Supabase Cloud
   if (!isSupabaseConfigured() || !supabase) {
     return getRegistrations();
   }
@@ -329,6 +357,15 @@ export const saveRegistration = async (data, audioFile = null) => {
     registeredAt: new Date().toISOString()
   };
 
+  // 1.5. Save to Render Backend if configured
+  if (isBackendConfigured()) {
+    try {
+      await saveRegistrationToBackend(newRegistration);
+    } catch (err) {
+      console.warn("Render backend insert notice:", err.message);
+    }
+  }
+
   // 2. Save to Supabase if configured
   if (isSupabaseConfigured() && supabase) {
     const fullPayload = {
@@ -440,6 +477,17 @@ export const updateRegistrationRecord = async (id, updatedFields) => {
     }
   }
 
+  if (isBackendConfigured()) {
+    try {
+      const target = updated.find(r => r.id === id);
+      if (target) {
+        await updateRegistrationOnBackend(id, target);
+      }
+    } catch (err) {
+      console.warn("Render backend update notice:", err.message);
+    }
+  }
+
   notifyRegistrationsChanged();
   return updated;
 };
@@ -451,6 +499,14 @@ export const updateRegistrationStatus = async (id, newStatus) => {
     item.id === id ? { ...item, status: newStatus } : item
   );
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+  if (isBackendConfigured()) {
+    try {
+      await updateRegistrationOnBackend(id, { status: newStatus });
+    } catch (err) {
+      console.warn("Render backend status update notice:", err.message);
+    }
+  }
 
   if (isSupabaseConfigured() && supabase) {
     try {
@@ -475,6 +531,14 @@ export const toggleCheckInStatus = async (id) => {
 
   );
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+  if (isBackendConfigured()) {
+    try {
+      await updateRegistrationOnBackend(id, { checkedIn: newCheckedIn, checkInTime });
+    } catch (err) {
+      console.warn("Render backend checkin notice:", err.message);
+    }
+  }
 
   if (isSupabaseConfigured() && supabase) {
     try {
@@ -558,6 +622,14 @@ export const processQrCheckIn = async (qrInput) => {
   );
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+  if (isBackendConfigured()) {
+    try {
+      await checkInParticipantOnBackend(target.id);
+    } catch (err) {
+      console.warn("Render backend QR checkin notice:", err.message);
+    }
+  }
 
   if (isSupabaseConfigured() && supabase) {
     try {
