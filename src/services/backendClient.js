@@ -16,7 +16,8 @@ export const getBackendUrl = () => {
   if (envUrl && typeof envUrl === 'string' && envUrl.trim()) {
     return envUrl.trim().replace(/\/+$/, '');
   }
-  return '';
+  // Default to live Render backend
+  return 'https://gsfcugottalent.onrender.com';
 };
 
 export const setBackendUrl = (url) => {
