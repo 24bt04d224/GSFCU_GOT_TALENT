@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { Calendar, Clock, MapPin, ArrowRight, ArrowDown } from 'lucide-react';
+import { EVENT_DETAILS } from '../data/eventData';
 import heroBgImg from '../assets/hero_bg.png';
 
 export default function HeroSection() {
@@ -127,25 +128,9 @@ export default function HeroSection() {
 
           {/* Editorial Event Information Metadata Section */}
           <div ref={metaRef} className="mb-8 sm:mb-10 space-y-3.5">
-            {/* Row 1: Event Date & Auditions */}
+            {/* Row 1: Auditions & Event Showcase */}
             <div className="flex flex-wrap items-center gap-y-3">
-              {/* Event Date */}
-              <div className="flex items-start gap-2.5">
-                <Calendar className="w-4 h-4 text-[#E66F2E] shrink-0 mt-0.5" />
-                <div>
-                  <span className="text-[10px] sm:text-[11px] font-mono font-medium tracking-[1px] text-[#F5EBD7]/70 uppercase block">
-                    EVENT DATE
-                  </span>
-                  <span className="text-xs sm:text-sm font-mono font-semibold tracking-[0.5px] text-[#F3E8D4] leading-[1.3] block">
-                    29 OCTOBER 2026
-                  </span>
-                </div>
-              </div>
-
-              {/* Subtle Vertical Divider */}
-              <div className="hidden sm:block w-[1px] h-6 bg-[#E66F2E]/25 mx-5 sm:mx-6" />
-
-              {/* Auditions */}
+              {/* Auditions (Active primary date) */}
               <div className="flex items-start gap-2.5">
                 <Clock className="w-4 h-4 text-[#E66F2E] shrink-0 mt-0.5" />
                 <div>
@@ -153,8 +138,31 @@ export default function HeroSection() {
                     AUDITIONS
                   </span>
                   <span className="text-xs sm:text-sm font-mono font-semibold tracking-[0.5px] text-[#F3E8D4] leading-[1.3] block">
-                    22 OCTOBER 2026 • THURSDAY
+                    {EVENT_DETAILS.displayAuditionDate}
                   </span>
+                </div>
+              </div>
+
+              {/* Subtle Vertical Divider */}
+              <div className="hidden sm:block w-[1px] h-6 bg-[#E66F2E]/25 mx-5 sm:mx-6" />
+
+              {/* Grand Showcase (Hidden till 22 October) */}
+              <div className="flex items-start gap-2.5">
+                <Calendar className="w-4 h-4 text-[#E66F2E] shrink-0 mt-0.5" />
+                <div>
+                  <span className="text-[10px] sm:text-[11px] font-mono font-medium tracking-[1px] text-[#F5EBD7]/70 uppercase block">
+                    GRAND SHOWCASE
+                  </span>
+                  {EVENT_DETAILS.isFinaleRevealed ? (
+                    <span className="text-xs sm:text-sm font-mono font-semibold tracking-[0.5px] text-[#F3E8D4] leading-[1.3] block">
+                      {EVENT_DETAILS.finaleDate}
+                    </span>
+                  ) : (
+                    <span className="text-xs sm:text-sm font-mono font-semibold tracking-[0.5px] text-[#D59A28] leading-[1.3] flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#D59A28] animate-pulse" />
+                      REVEALING 22 OCT
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

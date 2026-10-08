@@ -4,11 +4,10 @@ import { Calendar, MapPin, Radio, Sparkles } from 'lucide-react';
 
 export default function EventInfoStrip() {
   const items = [
-    { icon: Calendar, text: EVENT_DETAILS.date, highlight: true },
+    { icon: Calendar, text: `AUDITIONS: ${EVENT_DETAILS.auditionDate}`, highlight: true },
     { icon: MapPin, text: "AANGANVA, GSFC UNIVERSITY" },
-    { icon: Radio, text: "LIVE TALENT SHOWCASE" },
+    { icon: Radio, text: EVENT_DETAILS.isFinaleRevealed ? "GRAND SHOWCASE: 29 OCT" : "SHOWCASE: REVEALING 22 OCT" },
     { icon: Sparkles, text: "2026 EDITION", highlight: true },
-
   ];
 
   return (

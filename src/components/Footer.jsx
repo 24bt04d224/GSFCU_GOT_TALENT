@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Calendar, MapPin, Mail, AtSign, ArrowUp, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { EVENT_DETAILS } from '../data/eventData';
 
 export default function Footer() {
   const { canAccessPortal, loading } = useAuth();
@@ -53,9 +54,16 @@ export default function Footer() {
             </h4>
             
             <ul className="space-y-3 text-xs text-[#C9C5BD] font-sans">
-              <li className="flex items-center gap-3">
-                <Calendar className="w-4 h-4 text-[#E86F2D] shrink-0" />
-                <span className="text-[#F1E8D8] font-medium">Thursday, 29 October 2026</span>
+              <li className="flex items-start gap-3">
+                <Calendar className="w-4 h-4 text-[#E86F2D] shrink-0 mt-0.5" />
+                <div>
+                  <span className="text-[#F1E8D8] font-medium block">Auditions: Thursday, 22 October 2026</span>
+                  {EVENT_DETAILS.isFinaleRevealed ? (
+                    <span className="text-[#A69E90] text-[11px] block mt-0.5">Grand Showcase: Thursday, 29 October 2026</span>
+                  ) : (
+                    <span className="text-[#D59A28] text-[11px] font-mono block mt-0.5">Grand Showcase: Revealing 22 Oct</span>
+                  )}
+                </div>
               </li>
               
               <li className="flex items-center gap-3">

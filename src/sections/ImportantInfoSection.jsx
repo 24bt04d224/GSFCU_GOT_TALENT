@@ -1,5 +1,6 @@
 import React from 'react';
 import { Info, Calendar, ShieldCheck, UserCheck, Music, Bell } from 'lucide-react';
+import { EVENT_DETAILS } from '../data/eventData';
 import infoCalendarImg from '../assets/info_calendar.png';
 import infoRegistrationImg from '../assets/info_registration.png';
 import infoCampusImg from '../assets/info_campus.png';
@@ -11,7 +12,9 @@ const INFO_CARDS = [
     id: 1,
     icon: Calendar,
     title: "EVENT DATES & SCHEDULE",
-    body: "Auditions will be held on Thursday, 22 October 2026. The GSFCU Got Talent 2026 Grand Showcase will be held on Thursday, 29 October 2026. Detailed call sheets will be issued to registered candidates.",
+    body: EVENT_DETAILS.isFinaleRevealed
+      ? "Auditions will be held on Thursday, 22 October 2026. The GSFCU Got Talent 2026 Grand Showcase will be held on Thursday, 29 October 2026 at Aanganva, GSFC University. Detailed call sheets will be issued to registered candidates."
+      : "Auditions will be held on Thursday, 22 October 2026 at Aanganva, GSFC University. The Grand Showcase finale date will be officially revealed on 22 October during audition rounds. Detailed call sheets will be issued to registered candidates.",
     notice: "ORGANIZING COMMITTEE NOTICE",
     image: infoCalendarImg,
   },
@@ -27,7 +30,7 @@ const INFO_CARDS = [
     id: 3,
     icon: UserCheck,
     title: "ELIGIBILITY",
-    body: "Enrolled undergraduate & postgraduate students from School of Technology, School of Science, School of Management, and allied streams.",
+    body: "Enrolled undergraduate & postgraduate students from SOICT, SOCEFS, SOLS, SOCIS, and SOM&E.",
     notice: "ORGANIZING COMMITTEE NOTICE",
     image: infoCampusImg,
   },

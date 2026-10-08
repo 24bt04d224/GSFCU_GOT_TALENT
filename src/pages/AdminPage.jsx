@@ -884,10 +884,11 @@ export default function AdminPage() {
                     className="bg-[#08080a] border border-[#C49A3A]/25 rounded-lg px-3 py-2 text-xs text-[#F4E7D0] focus:outline-none focus:border-[#C96B35]"
                   >
                     <option value="ALL">All Schools</option>
-                    <option value="Technology">Technology (SOT)</option>
-                    <option value="Science">Science (SOS)</option>
-                    <option value="Management">Management (SOM)</option>
-                    <option value="Chemical">Chemical Sciences</option>
+                    <option value="SOICT">SOICT (Info & Tech)</option>
+                    <option value="SOCEFS">SOCEFS (Chemical & Fire)</option>
+                    <option value="SOLS">SOLS (Life Sciences)</option>
+                    <option value="SOCIS">SOCIS (Chemical & Industry)</option>
+                    <option value="SOM&E">SOM&E (Management & Enterprise)</option>
                   </select>
                 </div>
               </div>

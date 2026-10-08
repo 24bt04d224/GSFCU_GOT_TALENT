@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ClipboardCheck, Mic, Sparkles, ArrowRight } from 'lucide-react';
+import { EVENT_DETAILS } from '../data/eventData';
 import registerImg from '../assets/card_register.png';
 import auditionsImg from '../assets/card_auditions.png';
 import showcaseImg from '../assets/card_showcase.png';
@@ -22,7 +23,7 @@ const CARDS_DATA = [
     phaseLabel: "STAGE PHASE 02",
     title: "AUDITIONS",
     subtitle: "22 OCTOBER 2026 • THURSDAY",
-    description: "Perform your preliminary act in front of our faculty & guest judges panel during the campus audition rounds on Thursday, 22 October 2026. Receive immediate jury feedback.",
+    description: "Perform your preliminary act in front of our faculty & guest judges panel during the campus audition rounds at Aanganva, GSFC University on Thursday, 22 October 2026. Receive immediate jury feedback.",
     ctaText: "BRING YOUR BEST",
     ctaLink: null,
     image: auditionsImg,
@@ -32,8 +33,10 @@ const CARDS_DATA = [
     stepNumber: "03",
     phaseLabel: "STAGE PHASE 03",
     title: "GRAND SHOWCASE",
-    subtitle: "29 OCTOBER 2026",
-    description: "Shortlisted finalists will take center stage at the GSFCU Grand Auditorium on 29 October 2026 before a live audience and celebrity judges.",
+    subtitle: EVENT_DETAILS.isFinaleRevealed ? "29 OCTOBER 2026" : "REVEALING 22 OCTOBER",
+    description: EVENT_DETAILS.isFinaleRevealed
+      ? "Shortlisted finalists will take center stage at Aanganva, GSFC University on Thursday, 29 October 2026 before a live audience and celebrity judges."
+      : "Shortlisted finalists will take center stage before a live audience and celebrity judges at Aanganva, GSFC University. Grand Showcase finale date will be officially revealed on Thursday, 22 October 2026 during auditions.",
     ctaText: "THE FINAL STAGE",
     ctaLink: null,
     image: showcaseImg,

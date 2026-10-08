@@ -1,11 +1,37 @@
+// Finale reveal timestamp: Reveals 29 October 2026 on or after Thursday, 22 October 2026 00:00:00 IST
+export const FINALE_REVEAL_TIMESTAMP = new Date('2026-10-22T00:00:00+05:30').getTime();
+
+export const isFinaleDateRevealed = () => {
+  try {
+    return Date.now() >= FINALE_REVEAL_TIMESTAMP;
+  } catch {
+    return false;
+  }
+};
+
+const finaleRevealed = isFinaleDateRevealed();
+
 export const EVENT_DETAILS = {
   title: "GSFCU GOT TALENT 2026",
   tagline: "EXPECT THE UNEXPECTED",
-  date: "29 OCTOBER 2026",
-  fullDate: "Thursday, 29 October 2026",
+  
+  // Auditions (Active primary date)
   auditionDate: "22 OCTOBER 2026",
   auditionDay: "THURSDAY",
   auditionFullDate: "Thursday, 22 October 2026",
+  
+  // Grand Showcase (Hidden until 22 October 2026)
+  isFinaleRevealed: finaleRevealed,
+  finaleDate: "29 OCTOBER 2026",
+  finaleDay: "THURSDAY",
+  finaleFullDate: "Thursday, 29 October 2026",
+  
+  // Dynamic presentation properties
+  date: finaleRevealed ? "29 OCTOBER 2026" : "22 OCTOBER 2026",
+  fullDate: finaleRevealed ? "Thursday, 29 October 2026" : "Thursday, 22 October 2026 (Auditions)",
+  displayEventDate: finaleRevealed ? "29 OCTOBER 2026" : "REVEALING 22 OCT",
+  displayAuditionDate: "22 OCTOBER 2026 • THURSDAY",
+  
   university: "GSFC University",
   location: "Aanganva, GSFC University",
   venue: "Aanganva, GSFC University",
@@ -17,7 +43,6 @@ export const EVENT_DETAILS = {
     { handle: "@theatreclub_gsfcu", url: "https://instagram.com/theatreclub_gsfcu" }
   ],
   instagramHandle: "@radiogsfcu"
-
 };
 
 export const TALENT_CATEGORIES = [
@@ -100,17 +125,27 @@ export const HOW_IT_WORKS_STEPS = [
   {
     step: "03",
     title: "GRAND SHOWCASE",
-    subtitle: "29 OCTOBER 2026",
-    description: "Shortlisted finalists will take center stage at Aanganva, GSFC University on 29 October 2026 before a live audience and celebrity judges."
-
+    subtitle: finaleRevealed ? "29 OCTOBER 2026" : "REVEALING 22 OCTOBER",
+    description: finaleRevealed
+      ? "Shortlisted finalists will take center stage at Aanganva, GSFC University on Thursday, 29 October 2026 before a live audience and celebrity judges."
+      : "Shortlisted finalists will take center stage at Aanganva, GSFC University. Grand Showcase date will be officially revealed on Thursday, 22 October 2026 during auditions."
   }
+];
+
+export const SCHOOLS_AND_DEPARTMENTS = [
+  "School of Information and Communication Technology (SOICT)",
+  "School of Chemical and Fire Safety (SOCEFS)",
+  "School of Life Sciences (SOLS)",
+  "School of Chemical and Industry Sciences (SOCIS)",
+  "School of Management and Enterprise (SOM&E)"
 ];
 
 export const IMPORTANT_INFO = [
   {
     title: "Event Dates & Schedule",
-    detail: "Auditions will be held on Thursday, 22 October 2026. The GSFCU Got Talent 2026 Grand Showcase will be held on Thursday, 29 October 2026 at Aanganva, GSFC University."
-
+    detail: finaleRevealed
+      ? "Auditions will be held on Thursday, 22 October 2026. The GSFCU Got Talent 2026 Grand Showcase will be held on Thursday, 29 October 2026 at Aanganva, GSFC University."
+      : "Auditions will be held on Thursday, 22 October 2026 at Aanganva, GSFC University. The Grand Showcase finale date will be officially announced on 22 October during audition rounds."
   },
   {
     title: "Registration Guidelines",
@@ -118,12 +153,11 @@ export const IMPORTANT_INFO = [
   },
   {
     title: "Eligibility",
-    detail: "Enrolled undergraduate & postgraduate students from School of Technology, School of Science, School of Management, and allied streams."
+    detail: "Enrolled undergraduate & postgraduate students from SOICT, SOCEFS, SOLS, SOCIS, and SOM&E."
   },
   {
     title: "Performance & Equipment",
     detail: "Stage lighting, sound setup, microphones, and basic PA systems are provided at Aanganva. Specific props or custom audio tracks must be pre-submitted."
-
   },
   {
     title: "Official Announcements",
@@ -171,8 +205,9 @@ export const FAQS = [
   },
   {
     question: "When and where are the auditions and the main event held?",
-    answer: "Auditions will be held on Thursday, 22 October 2026. The GSFCU Got Talent 2026 Grand Showcase will be held on Thursday, 29 October 2026 at Aanganva, GSFC University."
-
+    answer: finaleRevealed
+      ? "Auditions will be held on Thursday, 22 October 2026. The GSFCU Got Talent 2026 Grand Showcase will be held on Thursday, 29 October 2026 at Aanganva, GSFC University."
+      : "Auditions will be held on Thursday, 22 October 2026 at Aanganva, GSFC University. The Grand Showcase finale date will be officially revealed during the auditions on Thursday, 22 October 2026."
   },
   {
     question: "What talent categories can I register for?",

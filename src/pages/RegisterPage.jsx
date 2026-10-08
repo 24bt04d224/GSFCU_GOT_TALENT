@@ -9,11 +9,14 @@ import {
   generateWhatsAppLink, 
   generateEmailLink 
 } from '../services/registrationService';
-import { TALENT_CATEGORIES } from '../data/eventData';
+import { TALENT_CATEGORIES, SCHOOLS_AND_DEPARTMENTS, EVENT_DETAILS } from '../data/eventData';
+import { 
+  validateStudentEnrollment 
+} from '../services/studentVerificationService';
 import { 
   User, Sparkles, ArrowRight, ArrowLeft, MessageSquare, ExternalLink, ShieldCheck, 
-  CheckCircle2, QrCode, AlertCircle, Music, Upload, Play, Pause, FileAudio, Mail, Loader2, Plus, Trash2, Users
-
+  CheckCircle2, QrCode, AlertCircle, Music, Upload, Play, Pause, FileAudio, Mail, Loader2, Plus, Trash2, Users,
+  Lock
 } from 'lucide-react';
 
 export default function RegisterPage() {
@@ -24,6 +27,7 @@ export default function RegisterPage() {
   const [registeredRecord, setRegisteredRecord] = useState(null);
   const [submitError, setSubmitError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [verifiedStudent, setVerifiedStudent] = useState(null);
 
   // Audio track upload state
   const [audioFile, setAudioFile] = useState(null);
@@ -34,7 +38,7 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState({
     fullName: '',
     enrollmentNo: '',
-    schoolDept: 'School of Technology (SOT)',
+    schoolDept: SCHOOLS_AND_DEPARTMENTS[0],
     semester: '1st Semester',
     phone: '',
     email: '',
@@ -52,6 +56,43 @@ export default function RegisterPage() {
   const [memberErrors, setMemberErrors] = useState({});
 
   const [errors, setErrors] = useState({});
+
+  const handleEnrollmentChange = (e) => {
+    const rawVal = e.target.value.toUpperCase();
+    setFormData((prev) => ({ ...prev, enrollmentNo: rawVal }));
+
+    const clean = rawVal.trim();
+    if (!clean) {
+      setVerifiedStudent(null);
+      setErrors((prev) => ({ ...prev, enrollmentNo: '' }));
+      return;
+    }
+
+    const verification = validateStudentEnrollment(clean);
+    if (verification.valid && verification.student) {
+      const student = verification.student;
+      setVerifiedStudent(student);
+      setFormData((prev) => ({
+        ...prev,
+        enrollmentNo: clean,
+        schoolDept: student.school || prev.schoolDept,
+        semester: student.semester || prev.semester,
+        email: prev.email || student.suggestedEmail || '',
+      }));
+      setErrors((prev) => ({
+        ...prev,
+        enrollmentNo: '',
+      }));
+    } else {
+      setVerifiedStudent(null);
+      if (clean.length >= 6) {
+        setErrors((prev) => ({
+          ...prev,
+          enrollmentNo: verification.error || 'Invalid GSFC University enrollment number format.'
+        }));
+      }
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -80,11 +121,11 @@ export default function RegisterPage() {
       if (teamMembers.length > 0) {
         setTeamMembers([teamMembers[0]]);
       } else {
-        setTeamMembers([{ name: '', enrollmentNumber: '' }]);
+        setTeamMembers([{ name: '', enrollmentNumber: '', verifiedStudent: null }]);
       }
     } else if (newFormat === 'Team') {
       if (teamMembers.length === 0) {
-        setTeamMembers([{ name: '', enrollmentNumber: '' }]);
+        setTeamMembers([{ name: '', enrollmentNumber: '', verifiedStudent: null }]);
       }
     }
 
@@ -93,7 +134,7 @@ export default function RegisterPage() {
 
   const addTeamMember = () => {
     if (1 + teamMembers.length >= 10) return;
-    setTeamMembers((prev) => [...prev, { name: '', enrollmentNumber: '' }]);
+    setTeamMembers((prev) => [...prev, { name: '', enrollmentNumber: '', verifiedStudent: null }]);
   };
 
   const removeTeamMember = (indexToRemove) => {
@@ -106,8 +147,25 @@ export default function RegisterPage() {
   };
 
   const updateTeamMember = (index, field, value) => {
+    const val = field === 'enrollmentNumber' ? value.toUpperCase() : value;
     setTeamMembers((prev) =>
-      prev.map((m, idx) => (idx === index ? { ...m, [field]: value } : m))
+      prev.map((m, idx) => {
+        if (idx !== index) return m;
+        const updated = { ...m, [field]: val };
+        
+        // Auto-verify if updating enrollmentNumber
+        if (field === 'enrollmentNumber') {
+          const cleanEnroll = val.trim();
+          const verification = validateStudentEnrollment(cleanEnroll);
+          if (verification.valid && verification.student) {
+            updated.name = verification.student.name || updated.name;
+            updated.verifiedStudent = verification.student;
+          } else {
+            updated.verifiedStudent = null;
+          }
+        }
+        return updated;
+      })
     );
     if (memberErrors[index]?.[field]) {
       setMemberErrors((prev) => ({
@@ -117,11 +175,20 @@ export default function RegisterPage() {
     }
   };
 
-
   const validateStep1 = () => {
     const newErrors = {};
+    const cleanEnroll = formData.enrollmentNo.trim().toUpperCase();
+
+    if (!cleanEnroll) {
+      newErrors.enrollmentNo = 'Enrollment Number is required';
+    } else {
+      const verification = validateStudentEnrollment(cleanEnroll);
+      if (!verification.valid) {
+        newErrors.enrollmentNo = verification.error || 'Invalid GSFC University enrollment number.';
+      }
+    }
+
     if (!formData.fullName.trim()) newErrors.fullName = 'Full Name is required';
-    if (!formData.enrollmentNo.trim()) newErrors.enrollmentNo = 'Enrollment Number is required';
     if (!formData.phone.trim() || formData.phone.length < 10) newErrors.phone = 'Valid 10-digit phone number required';
     if (!formData.email.trim() || !formData.email.includes('@')) newErrors.email = 'Valid student email required';
 
@@ -139,28 +206,34 @@ export default function RegisterPage() {
 
     if (formData.participationType === 'Duo' || formData.participationType === 'Team') {
       if (teamMembers.length === 0 && formData.participationType === 'Duo') {
-        setTeamMembers([{ name: '', enrollmentNumber: '' }]);
+        setTeamMembers([{ name: '', enrollmentNumber: '', verifiedStudent: null }]);
       }
 
-      const primaryEnrollment = formData.enrollmentNo.trim().toLowerCase();
+      const primaryEnrollment = formData.enrollmentNo.trim().toUpperCase();
       const seenEnrollments = new Set();
       if (primaryEnrollment) seenEnrollments.add(primaryEnrollment);
 
       teamMembers.forEach((m, idx) => {
         const errs = {};
         const nameVal = m.name.trim();
-        const enrollVal = m.enrollmentNumber.trim().toLowerCase();
+        const enrollVal = m.enrollmentNumber.trim().toUpperCase();
 
-        if (!nameVal) errs.name = 'Full name is required';
         if (!enrollVal) {
           errs.enrollmentNumber = 'Enrollment number is required';
         } else if (enrollVal === primaryEnrollment) {
-          errs.enrollmentNumber = 'Primary participant enrollment number cannot be added as a team member';
+          errs.enrollmentNumber = 'Primary participant cannot be added as a team member';
         } else if (seenEnrollments.has(enrollVal)) {
           errs.enrollmentNumber = 'This student has already been added to the performance.';
         } else {
-          seenEnrollments.add(enrollVal);
+          const verification = validateStudentEnrollment(enrollVal);
+          if (!verification.valid) {
+            errs.enrollmentNumber = verification.error || 'Invalid student enrollment number.';
+          } else {
+            seenEnrollments.add(enrollVal);
+          }
         }
+
+        if (!nameVal) errs.name = 'Full name is required';
 
         if (Object.keys(errs).length > 0) {
           newMemberErrors[idx] = errs;
@@ -172,7 +245,6 @@ export default function RegisterPage() {
     setErrors(newErrors);
     setMemberErrors(newMemberErrors);
     return Object.keys(newErrors).length === 0 && !hasMemberErrors;
-
   };
 
   const handleNext = () => {
@@ -271,6 +343,7 @@ export default function RegisterPage() {
     setSubmitted(false);
     setRegisteredRecord(null);
     setSubmitError('');
+    setVerifiedStudent(null);
     setStep(1);
     setTeamMembers([]);
     setMemberErrors({});
@@ -278,7 +351,7 @@ export default function RegisterPage() {
     setFormData({
       fullName: '',
       enrollmentNo: '',
-      schoolDept: 'School of Technology (SOT)',
+      schoolDept: SCHOOLS_AND_DEPARTMENTS[0],
       semester: '1st Semester',
       phone: '',
       email: '',
@@ -315,7 +388,9 @@ export default function RegisterPage() {
               OFFICIAL <span className="text-[#C96B35]">REGISTRATION</span>
             </h1>
             <p className="font-hand text-xl xs:text-2xl text-[#C49A3A]">
-              "Take The Stage — 29 October 2026"
+              {EVENT_DETAILS.isFinaleRevealed
+                ? '"Take The Stage — 29 October 2026"'
+                : '"Take The Stage — Auditions: 22 October 2026"'}
             </p>
           </div>
 
@@ -354,12 +429,71 @@ export default function RegisterPage() {
                     <h2 className="font-bebas text-xl sm:text-2xl text-[#F4E7D0] flex items-center gap-2 tracking-wide">
                       <User className="w-4 h-4 sm:w-5 sm:h-5 text-[#C96B35] shrink-0" /> STUDENT IDENTIFICATION
                     </h2>
-                    <p className="text-xs text-[#B5ACA0] font-sans">Enter your verified GSFC University details (as Primary Participant / Team Lead).</p>
+                    <p className="text-xs text-[#B5ACA0] font-sans">
+                      Enter your details as Primary Participant / Team Lead.
+                    </p>
+                  </div>
 
+                  {/* ENROLLMENT NUMBER INPUT FIRST */}
+                  <div>
+                    <label className="block text-xs font-mono text-[#F4E7D0] uppercase mb-2">
+                      Enrollment Number *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        name="enrollmentNo"
+                        value={formData.enrollmentNo}
+                        onChange={handleEnrollmentChange}
+                        placeholder="Enter enrollment number"
+                        className="w-full bg-[#08080a] border border-[#C49A3A]/25 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] placeholder-[#B5ACA0]/50 focus:outline-none focus:border-[#C96B35] transition-colors font-mono uppercase tracking-wider pr-28"
+                      />
+                      {verifiedStudent ? (
+                        <span className="absolute right-3 top-3 text-[#68734A] flex items-center gap-1.5 text-xs font-mono font-bold bg-[#68734A]/15 px-2.5 py-1 rounded border border-[#68734A]/30">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> VERIFIED
+                        </span>
+                      ) : (
+                        formData.enrollmentNo.trim().length >= 4 && (
+                          <span className="absolute right-3 top-3.5 text-[#B5ACA0] text-xs font-mono">
+                            Auto-checking...
+                          </span>
+                        )
+                      )}
+                    </div>
+                    {errors.enrollmentNo && (
+                      <p className="text-xs text-red-400 mt-1.5 font-mono flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {errors.enrollmentNo}
+                      </p>
+                    )}
+
+                    {/* ENROLLMENT PATTERN VERIFIED BANNER */}
+                    {verifiedStudent && (
+                      <div className="mt-3 p-3.5 rounded-lg bg-[#141812] border border-[#68734A]/40 flex items-start justify-between gap-3 animate-in fade-in">
+                        <div className="flex items-start gap-2.5">
+                          <CheckCircle2 className="w-4 h-4 text-[#68734A] shrink-0 mt-0.5" />
+                          <div>
+                            <span className="font-mono text-[10px] uppercase font-bold text-[#68734A] tracking-wider block">
+                              GSFC UNIVERSITY ENROLLMENT PATTERN VERIFIED
+                            </span>
+                            <p className="font-bold text-xs text-[#F4E7D0]">
+                              {formData.fullName ? formData.fullName : 'GSFCU Student Performer'}
+                            </p>
+                            <p className="text-[11px] text-[#B5ACA0] font-sans">
+                              {verifiedStudent.course} • {verifiedStudent.school}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-mono text-[#68734A] bg-[#68734A]/20 px-2.5 py-0.5 rounded border border-[#68734A]/40 shrink-0 font-bold">
+                          {verifiedStudent.semester}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono text-[#F4E7D0] uppercase mb-2">Full Name *</label>
+                    <label className="block text-xs font-mono text-[#F4E7D0] uppercase mb-2">
+                      Full Name *
+                    </label>
                     <input
                       type="text"
                       name="fullName"
@@ -371,38 +505,29 @@ export default function RegisterPage() {
                     {errors.fullName && <p className="text-xs text-red-400 mt-1 font-mono">{errors.fullName}</p>}
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-mono text-[#F4E7D0] uppercase mb-2">Enrollment Number *</label>
-                    <input
-                      type="text"
-                      name="enrollmentNo"
-                      value={formData.enrollmentNo}
-                      onChange={handleChange}
-                      placeholder="e.g. 230101042"
-                      className="w-full bg-[#08080a] border border-[#C49A3A]/25 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] placeholder-[#B5ACA0]/50 focus:outline-none focus:border-[#C96B35] transition-colors font-mono"
-                    />
-                    {errors.enrollmentNo && <p className="text-xs text-red-400 mt-1 font-mono">{errors.enrollmentNo}</p>}
-                  </div>
-
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                     <div>
-                      <label className="block text-xs font-mono text-[#F4E7D0] uppercase mb-2">School / Department</label>
+                      <label className="block text-xs font-mono text-[#F4E7D0] uppercase mb-2">
+                        School / Department
+                      </label>
                       <select
                         name="schoolDept"
                         value={formData.schoolDept}
                         onChange={handleChange}
                         className="w-full bg-[#08080a] border border-[#C49A3A]/25 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] focus:outline-none focus:border-[#C96B35] transition-colors font-sans"
                       >
-                        <option value="School of Technology (SOT)">School of Technology (SOT)</option>
-                        <option value="School of Science (SOS)">School of Science (SOS)</option>
-                        <option value="School of Management (SOM)">School of Management (SOM)</option>
-                        <option value="School of Chemical Sciences">School of Chemical Sciences</option>
-                        <option value="Other Stream">Other Stream</option>
+                        {SCHOOLS_AND_DEPARTMENTS.map((dept) => (
+                          <option key={dept} value={dept}>
+                            {dept}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-mono text-[#F4E7D0] uppercase mb-2">Semester</label>
+                      <label className="block text-xs font-mono text-[#F4E7D0] uppercase mb-2">
+                        Semester
+                      </label>
                       <select
                         name="semester"
                         value={formData.semester}
@@ -436,14 +561,22 @@ export default function RegisterPage() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-mono text-[#F4E7D0] uppercase mb-2">Student Email *</label>
+                      <label className="block text-xs font-mono text-[#F4E7D0] uppercase mb-2 flex items-center justify-between">
+                        <span>Student Email *</span>
+                        {verifiedStudent?.name && (
+                          <span className="text-[10px] text-[#68734A] flex items-center gap-1 font-mono">
+                            <Lock className="w-3 h-3" /> Official
+                          </span>
+                        )}
+                      </label>
                       <input
                         type="email"
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
                         placeholder="student@gsfcuniversity.ac.in"
-                        className="w-full bg-[#08080a] border border-[#C49A3A]/25 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] placeholder-[#B5ACA0]/50 focus:outline-none focus:border-[#C96B35] transition-colors font-sans"
+                        readOnly={Boolean(verifiedStudent?.name && verifiedStudent?.email)}
+                        className={`w-full bg-[#08080a] border border-[#C49A3A]/25 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] placeholder-[#B5ACA0]/50 focus:outline-none focus:border-[#C96B35] transition-colors font-sans ${verifiedStudent?.name && verifiedStudent?.email ? 'cursor-not-allowed bg-[#0d0c11] opacity-90' : ''}`}
                       />
                       {errors.email && <p className="text-xs text-red-400 mt-1 font-mono">{errors.email}</p>}
                     </div>
@@ -516,30 +649,43 @@ export default function RegisterPage() {
                         <p className="text-xs text-[#B5ACA0] font-sans">Enter the details of your performance partner.</p>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-mono text-[#F4E7D0] uppercase mb-2">Partner Full Name *</label>
-                          <input
-                            type="text"
-                            value={teamMembers[0]?.name || ''}
-                            onChange={(e) => updateTeamMember(0, 'name', e.target.value)}
-                            placeholder="e.g. Rahul Patel"
-                            className="w-full bg-[#0f0e13] border border-[#C49A3A]/25 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] placeholder-[#B5ACA0]/50 focus:outline-none focus:border-[#C96B35] font-sans"
-                          />
-                          {memberErrors[0]?.name && <p className="text-xs text-red-400 mt-1 font-mono">{memberErrors[0].name}</p>}
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-mono text-[#F4E7D0] uppercase mb-2">Partner Enrollment Number *</label>
+                            <input
+                              type="text"
+                              value={teamMembers[0]?.enrollmentNumber || ''}
+                              onChange={(e) => updateTeamMember(0, 'enrollmentNumber', e.target.value)}
+                              placeholder="Enter enrollment number"
+                              className="w-full bg-[#0f0e13] border border-[#C49A3A]/25 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] placeholder-[#B5ACA0]/50 focus:outline-none focus:border-[#C96B35] font-mono uppercase"
+                            />
+                            {memberErrors[0]?.enrollmentNumber && <p className="text-xs text-red-400 mt-1 font-mono">{memberErrors[0].enrollmentNumber}</p>}
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-mono text-[#F4E7D0] uppercase mb-2">
+                              Partner Full Name *
+                            </label>
+                            <input
+                              type="text"
+                              value={teamMembers[0]?.name || ''}
+                              onChange={(e) => updateTeamMember(0, 'name', e.target.value)}
+                              placeholder="e.g. Rahul Patel"
+                              className="w-full bg-[#0f0e13] border border-[#C49A3A]/25 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] placeholder-[#B5ACA0]/50 focus:outline-none focus:border-[#C96B35] font-sans"
+                            />
+                            {memberErrors[0]?.name && <p className="text-xs text-red-400 mt-1 font-mono">{memberErrors[0].name}</p>}
+                          </div>
                         </div>
 
-                        <div>
-                          <label className="block text-xs font-mono text-[#F4E7D0] uppercase mb-2">Partner Enrollment Number *</label>
-                          <input
-                            type="text"
-                            value={teamMembers[0]?.enrollmentNumber || ''}
-                            onChange={(e) => updateTeamMember(0, 'enrollmentNumber', e.target.value)}
-                            placeholder="e.g. 230101051"
-                            className="w-full bg-[#0f0e13] border border-[#C49A3A]/25 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] placeholder-[#B5ACA0]/50 focus:outline-none focus:border-[#C96B35] font-mono"
-                          />
-                          {memberErrors[0]?.enrollmentNumber && <p className="text-xs text-red-400 mt-1 font-mono">{memberErrors[0].enrollmentNumber}</p>}
-                        </div>
+                        {teamMembers[0]?.verifiedStudent && (
+                          <div className="p-3 rounded-lg bg-[#141812] border border-[#68734A]/40 flex items-center gap-2.5 text-xs text-[#F4E7D0]">
+                            <CheckCircle2 className="w-4 h-4 text-[#68734A] shrink-0" />
+                            <span>
+                              Pattern Verified: {teamMembers[0].verifiedStudent.course} ({teamMembers[0].verifiedStudent.school})
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -578,7 +724,21 @@ export default function RegisterPage() {
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-[11px] font-mono text-[#B5ACA0] uppercase mb-1">Member Name *</label>
+                              <label className="block text-[11px] font-mono text-[#B5ACA0] uppercase mb-1">Enrollment Number *</label>
+                              <input
+                                type="text"
+                                value={member.enrollmentNumber}
+                                onChange={(e) => updateTeamMember(idx, 'enrollmentNumber', e.target.value)}
+                                placeholder="Enter enrollment number"
+                                className="w-full bg-[#08080a] border border-[#C49A3A]/25 rounded-lg px-3.5 py-2.5 text-xs text-[#F4E7D0] placeholder-[#B5ACA0]/50 focus:outline-none focus:border-[#C96B35] font-mono uppercase"
+                              />
+                              {memberErrors[idx]?.enrollmentNumber && <p className="text-xs text-red-400 mt-1 font-mono">{memberErrors[idx].enrollmentNumber}</p>}
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-mono text-[#B5ACA0] uppercase mb-1">
+                                Member Name *
+                              </label>
                               <input
                                 type="text"
                                 value={member.name}
@@ -588,19 +748,16 @@ export default function RegisterPage() {
                               />
                               {memberErrors[idx]?.name && <p className="text-xs text-red-400 mt-1 font-mono">{memberErrors[idx].name}</p>}
                             </div>
-
-                            <div>
-                              <label className="block text-[11px] font-mono text-[#B5ACA0] uppercase mb-1">Enrollment Number *</label>
-                              <input
-                                type="text"
-                                value={member.enrollmentNumber}
-                                onChange={(e) => updateTeamMember(idx, 'enrollmentNumber', e.target.value)}
-                                placeholder="Enter enrollment number"
-                                className="w-full bg-[#08080a] border border-[#C49A3A]/25 rounded-lg px-3.5 py-2.5 text-xs text-[#F4E7D0] placeholder-[#B5ACA0]/50 focus:outline-none focus:border-[#C96B35] font-mono"
-                              />
-                              {memberErrors[idx]?.enrollmentNumber && <p className="text-xs text-red-400 mt-1 font-mono">{memberErrors[idx].enrollmentNumber}</p>}
-                            </div>
                           </div>
+
+                          {member.verifiedStudent && (
+                            <div className="p-2.5 rounded bg-[#141812] border border-[#68734A]/30 text-xs text-[#F4E7D0] flex items-center gap-2">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-[#68734A] shrink-0" />
+                              <span className="text-[11px] font-sans">
+                                Pattern Verified: {member.verifiedStudent.course}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       ))}
 
