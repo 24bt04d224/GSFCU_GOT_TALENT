@@ -1,9 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Calendar, Clock, MapPin } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import stageCtaBg from '../assets/stage_cta_bg.png';
 
 export default function RegistrationCtaSection() {
+  const navigate = useNavigate();
+  const { user, openAuthModal } = useAuth();
   return (
     <section className="w-full min-h-[640px] lg:h-[700px] relative overflow-hidden flex flex-col justify-center items-center text-center select-none bg-[#050507] border-t border-[#C49A3A]/15 z-10 font-sans">
       
@@ -61,13 +64,14 @@ export default function RegistrationCtaSection() {
 
         {/* Primary CTA Button */}
         <div className="relative group mb-10 sm:mb-14">
-          <Link
-            to="/register"
-            className="relative inline-flex items-center justify-center gap-3 px-8 xs:px-10 sm:px-12 py-4 sm:py-4.5 rounded-[8px] bg-[#E86F2D] hover:bg-[#D45F20] active:bg-[#B84E15] text-[#F5EBD9] font-mono font-bold text-xs sm:text-sm tracking-[0.2em] uppercase shadow-md transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] border border-[#F4E7D0]/20 btn-hover-subtle"
+          <button
+            type="button"
+            onClick={() => (!user ? openAuthModal('/register') : navigate('/register'))}
+            className="relative inline-flex items-center justify-center gap-3 px-8 xs:px-10 sm:px-12 py-4 sm:py-4.5 rounded-[8px] bg-[#E86F2D] hover:bg-[#D45F20] active:bg-[#B84E15] text-[#F5EBD9] font-mono font-bold text-xs sm:text-sm tracking-[0.2em] uppercase shadow-md transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] border border-[#F4E7D0]/20 btn-hover-subtle cursor-pointer"
           >
             <span>TAKE THE STAGE</span>
             <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1.5 transition-transform duration-200 text-[#F5EBD9]" />
-          </Link>
+          </button>
         </div>
 
         {/* Event Information Strip (Clean, Refined, Compact) */}

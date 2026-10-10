@@ -333,3 +333,17 @@ body {
   }
 }
 
+/* Gold Shimmer Effect for Google Auth Button */
+@keyframes goldShimmer {
+  0% {
+    transform: translateX(-150%) skewX(-20deg);
+  }
+  50%, 100% {
+    transform: translateX(250%) skewX(-20deg);
+  }
+}
+
+.animate-gold-shimmer {
+  animation: goldShimmer 3.5s infinite ease-in-out;
+}
+

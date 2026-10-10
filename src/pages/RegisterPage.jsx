@@ -1,9 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import DigitalPassModal from '../components/DigitalPassModal';
+import { useAuth } from '../context/AuthContext';
 import { 
   saveRegistration, 
   generateWhatsAppLink, 
@@ -20,6 +21,7 @@ import {
 } from 'lucide-react';
 
 export default function RegisterPage() {
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [registrationId, setRegistrationId] = useState('');
@@ -56,6 +58,17 @@ export default function RegisterPage() {
   const [memberErrors, setMemberErrors] = useState({});
 
   const [errors, setErrors] = useState({});
+
+  // Auto-fill verified user details from Google Auth
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        fullName: prev.fullName || user.displayName || user.name || '',
+        email: prev.email || user.email || '',
+      }));
+    }
+  }, [user]);
 
   const handleEnrollmentChange = (e) => {
     const rawVal = e.target.value.toUpperCase();
@@ -433,6 +446,37 @@ export default function RegisterPage() {
                       Enter your details as Primary Participant / Team Lead.
                     </p>
                   </div>
+
+                  {/* GOOGLE AUTHENTICATION VERIFIED BADGE */}
+                  {user && (
+                    <div className="p-3.5 rounded-xl bg-black/60 border border-[#FFBF00]/30 flex items-center justify-between gap-3 text-xs font-mono">
+                      <div className="flex items-center gap-3">
+                        {user.photoURL ? (
+                          <img
+                            src={user.photoURL}
+                            alt={user.displayName}
+                            className="w-8 h-8 rounded-full border border-[#FFBF00]/40 object-cover"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-[#FFBF00]/20 text-[#FFBF00] flex items-center justify-center font-bold text-xs border border-[#FFBF00]/30">
+                            {(user.displayName || user.name || 'U')[0].toUpperCase()}
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-[#F4E7D0] font-semibold flex items-center gap-1.5 text-xs">
+                            <span>{user.displayName || user.name}</span>
+                            <span className="text-[9px] text-[#FFBF00] bg-[#FFBF00]/15 px-1.5 py-0.5 rounded border border-[#FFBF00]/30 uppercase font-bold tracking-wider">
+                              AUTHENTICATED
+                            </span>
+                          </p>
+                          <p className="text-[#C9C5BD]/70 text-[11px]">{user.email}</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-[#68734A] flex items-center gap-1 bg-[#68734A]/15 px-2 py-1 rounded border border-[#68734A]/30 font-bold">
+                        <CheckCircle2 className="w-3 h-3" /> VERIFIED
+                      </span>
+                    </div>
+                  )}
 
                   {/* ENROLLMENT NUMBER INPUT FIRST */}
                   <div>

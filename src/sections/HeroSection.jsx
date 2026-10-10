@@ -1,11 +1,14 @@
 import React, { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { Calendar, Clock, MapPin, ArrowRight, ArrowDown } from 'lucide-react';
 import { EVENT_DETAILS } from '../data/eventData';
+import { useAuth } from '../context/AuthContext';
 import heroBgImg from '../assets/hero_bg.png';
 
 export default function HeroSection() {
+  const navigate = useNavigate();
+  const { user, openAuthModal } = useAuth();
   const containerRef = useRef(null);
   const eyebrowRef = useRef(null);
   const titleRef = useRef(null);
@@ -184,14 +187,14 @@ export default function HeroSection() {
 
           {/* Campaign CTA Area */}
           <div ref={ctaGroupRef} className="flex flex-wrap items-center gap-5 sm:gap-7">
-            <Link
-              to="/register"
-              className="group relative overflow-hidden rounded-[8px] bg-[#E66F2E] hover:bg-[#d05e1f] px-8 py-4 text-xs sm:text-sm font-mono font-bold tracking-[0.15em] text-[#F2E8D5] uppercase shadow-xl shadow-[#E66F2E]/20 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2.5 border border-[#E66F2E] min-h-[54px] w-full sm:w-auto text-center"
+            <button
+              type="button"
+              onClick={() => (!user ? openAuthModal('/register') : navigate('/register'))}
+              className="group relative overflow-hidden rounded-[8px] bg-[#E66F2E] hover:bg-[#d05e1f] px-8 py-4 text-xs sm:text-sm font-mono font-bold tracking-[0.15em] text-[#F2E8D5] uppercase shadow-xl shadow-[#E66F2E]/20 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2.5 border border-[#E66F2E] min-h-[54px] w-full sm:w-auto text-center cursor-pointer"
             >
               <span>REGISTER NOW</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-
-            </Link>
+            </button>
 
             <a
               href="#about"
