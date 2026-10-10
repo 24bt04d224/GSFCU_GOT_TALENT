@@ -24,12 +24,12 @@ export function normalizeEnrollment(enrollmentNo) {
  * - BCA: BCA + 3 to 5 digits (e.g. BCA001, BCA050)
  * - BBA: BBA + 4 to 6 digits (e.g. BBA01088, BBA01001)
  * - BCOM: BCOM + 3 to 5 digits (e.g. BCOM001, BCOM048)
- * - SC (B.Sc): SC + 4 to 6 digits (e.g. SC01001, SC02001, SC03001)
+ * - SCI / SC (B.Sc): SCI + 3 to 6 digits (e.g. SCI07011, SCI01001) or SC + 4 to 6 digits (e.g. SC01001, SC02001, SC03001)
  * - MSC (M.Sc): MSC + 4 to 6 digits (e.g. MSC02010)
  * - MBA: MBA + 4 to 6 digits (e.g. MBA01001)
  * - PHDSC: PHDSC + 4 to 6 digits (e.g. PHDSC0402, PHDSC02001)
  */
-export const GSFCU_BRANCH_SUFFIX_REGEX = /^(BT(\d{4,6}|\d{2}D\d{2,4})|BCA\d{3,5}|BBA\d{4,6}|BCOM\d{3,5}|SC\d{4,6}|MSC\d{4,6}|MBA\d{4,6}|PHDSC\d{4,5})$/i;
+export const GSFCU_BRANCH_SUFFIX_REGEX = /^(BT(\d{4,6}|\d{2}D\d{2,4})|BCA\d{3,5}|BBA\d{4,6}|BCOM\d{3,5}|SCI\d{3,6}|SC\d{4,6}|MSC\d{4,6}|MBA\d{4,6}|PHDSC\d{4,5})$/i;
 
 /**
  * Intelligently infer school, department, course, and semester from GSFCU enrollment structure
@@ -79,6 +79,14 @@ export function getDetailsFromEnrollmentPattern(enrollmentNo) {
     school = 'School of Information and Communication Technology (SOICT)';
     dept = 'Computer Science & Engineering';
     course = suffix.includes('D') ? 'B.Tech. CSE (Lateral D2D)' : 'B.Tech. Computer Science & Engineering';
+  } else if (suffix.startsWith('SCI07') || suffix.startsWith('SC07')) {
+    school = 'School of Chemical and Industry Sciences (SOCIS)';
+    dept = 'Applied & Physical Sciences';
+    course = 'B.Sc. (Hons.) Science Program';
+  } else if (suffix.startsWith('SCI')) {
+    school = 'School of Chemical and Industry Sciences (SOCIS)';
+    dept = 'Chemical & Physical Sciences';
+    course = 'Bachelor of Science (B.Sc.)';
   } else if (suffix.startsWith('SC01') || suffix.startsWith('MSC01')) {
     school = 'School of Chemical and Industry Sciences (SOCIS)';
     dept = 'Chemical Sciences';
@@ -153,7 +161,7 @@ export function validateStudentEnrollment(enrollmentNo) {
   if (!GSFCU_BRANCH_SUFFIX_REGEX.test(suffix)) {
     return {
       valid: false,
-      error: 'Invalid GSFCU branch code. Must follow university format (e.g. 24BT04D224, 26BT01001, 26BCA001, 25BBA01088, 25SC02001).',
+      error: 'Invalid GSFCU branch code. Must follow university format (e.g. 26SCI07011, 24BT04D224, 26BT01001, 26BCA001, 25BBA01088).',
       student: null,
       isFirstYear: yearCode === '26',
       isPatternMatch: false
