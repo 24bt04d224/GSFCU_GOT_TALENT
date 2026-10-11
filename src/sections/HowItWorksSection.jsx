@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ClipboardCheck, Mic, Sparkles, ArrowRight } from 'lucide-react';
-import { EVENT_DETAILS } from '../data/eventData';
 import registerImg from '../assets/card_register.png';
 import auditionsImg from '../assets/card_auditions.png';
 import showcaseImg from '../assets/card_showcase.png';

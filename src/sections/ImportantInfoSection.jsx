@@ -1,6 +1,5 @@
 import React from 'react';
 import { Info, Calendar, ShieldCheck, UserCheck, Music, Bell } from 'lucide-react';
-import { EVENT_DETAILS } from '../data/eventData';
 import infoCalendarImg from '../assets/info_calendar.png';
 import infoRegistrationImg from '../assets/info_registration.png';
 import infoCampusImg from '../assets/info_campus.png';

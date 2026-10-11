@@ -12,7 +12,6 @@ import {
   saveRegistrationToBackend,
   checkInParticipantOnBackend,
   updateRegistrationOnBackend,
-  fetchSponsorsFromBackend,
   getBackendUrl,
   setBackendUrl,
   checkBackendHealth

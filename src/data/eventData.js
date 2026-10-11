@@ -9,8 +9,6 @@ export const isFinaleDateRevealed = () => {
   }
 };
 
-const finaleRevealed = isFinaleDateRevealed();
-
 export const EVENT_DETAILS = {
   title: "GSFCU GOT TALENT 2026",
   tagline: "EXPECT THE UNEXPECTED",
@@ -21,7 +19,7 @@ export const EVENT_DETAILS = {
   auditionFullDate: "Thursday, 22 October 2026",
   
   // Grand Showcase / Auditions
-  isFinaleRevealed: false,
+  isFinaleRevealed: isFinaleDateRevealed(),
   finaleDate: "22 OCTOBER 2026",
   finaleDay: "THURSDAY",
   finaleFullDate: "Thursday, 22 October 2026",

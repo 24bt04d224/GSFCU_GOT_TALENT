@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Calendar, MapPin, Mail, AtSign, ArrowUp, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { EVENT_DETAILS } from '../data/eventData';
 
 export default function Footer() {
   const { canAccessPortal, loading } = useAuth();

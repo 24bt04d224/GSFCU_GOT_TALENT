@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Calendar, Clock, MapPin } from 'lucide-react';
+import { ArrowRight, Calendar, MapPin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import stageCtaBg from '../assets/stage_cta_bg.png';
 

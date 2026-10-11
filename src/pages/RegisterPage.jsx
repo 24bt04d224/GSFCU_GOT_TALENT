@@ -10,7 +10,7 @@ import {
   generateWhatsAppLink, 
   generateEmailLink 
 } from '../services/registrationService';
-import { TALENT_CATEGORIES, SCHOOLS_AND_DEPARTMENTS, EVENT_DETAILS } from '../data/eventData';
+import { TALENT_CATEGORIES, SCHOOLS_AND_DEPARTMENTS } from '../data/eventData';
 import { 
   validateStudentEnrollment 
 } from '../services/studentVerificationService';

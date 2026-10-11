@@ -85,7 +85,7 @@ function parseJsonBody(req) {
       }
       try {
         resolve(JSON.parse(body));
-      } catch (err) {
+      } catch {
         reject(new Error('Invalid JSON'));
       }
     });
