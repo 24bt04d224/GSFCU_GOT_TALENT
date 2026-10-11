@@ -16,7 +16,8 @@ import {
   googleProvider,
   ADMIN_EMAILS,
   isFirebaseConfigured,
-  isAuthorizedUniversityEmail
+  isAuthorizedUniversityEmail,
+  isAuthorizedAdminEmail
 } from '../services/firebaseConfig';
 
 const AuthContext = createContext({
@@ -192,8 +193,9 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  // 1. Google Authentication with Popup
-  const signInWithGoogle = async () => {
+  // 1. Google Authentication with Popup (supports student domain check and adminOnly whitelist)
+  const signInWithGoogle = async (options = {}) => {
+    const { adminOnly = false } = options;
     setLoading(true);
     setAuthError(null);
 
@@ -201,42 +203,68 @@ export const AuthProvider = ({ children }) => {
     if (!isFirebaseConfigured()) {
       console.warn('Firebase credentials not set in .env. Simulating Google Sign-In for development...');
       await new Promise((res) => setTimeout(res, 800));
+      const selectedEmail = adminOnly ? '24bt04d224@gsfcuniversity.ac.in' : 'student@gsfcuniversity.ac.in';
+      const assignedRole = adminOnly ? 'admin' : 'student';
       const demoUser = {
-        uid: 'demo_google_user_' + Date.now(),
-        id: 'demo_google_user_' + Date.now(),
-        displayName: 'GSFCU Verified Student',
-        name: 'GSFCU Verified Student',
-        email: 'student@gsfcuniversity.ac.in',
+        uid: 'demo_user_' + Date.now(),
+        id: 'demo_user_' + Date.now(),
+        displayName: adminOnly ? 'Authorized Event Admin (24bt04d224)' : 'GSFCU Verified Student',
+        name: adminOnly ? 'Authorized Event Admin (24bt04d224)' : 'GSFCU Verified Student',
+        email: selectedEmail,
         photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
-        role: 'student',
+        role: assignedRole,
       };
       setUser(demoUser);
-      setRole('student');
-      localStorage.setItem('gsfcu_user_role', 'student');
+      setRole(assignedRole);
+      if (adminOnly) {
+        localStorage.setItem('gsfcu_admin_auth', 'true');
+        sessionStorage.setItem('gsfcu_admin_auth', 'true');
+      }
+      localStorage.setItem('gsfcu_user_role', assignedRole);
       localStorage.setItem('gsfcu_user_info', JSON.stringify(demoUser));
       setLoading(false);
-      return { success: true, user: demoUser, role: 'student' };
+      return { success: true, user: demoUser, role: assignedRole };
     }
 
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const userEmail = (result.user?.email || '').toLowerCase().trim();
 
-      // Enforce university domain restriction
-      if (!isAuthorizedUniversityEmail(userEmail)) {
-        await firebaseSignOut(auth);
-        setUser(null);
-        setRole(null);
-        localStorage.removeItem('gsfcu_user_role');
-        localStorage.removeItem('gsfcu_user_info');
-        const domainError = `Access restricted: '${userEmail}' is not an authorized university email. Please sign in with your official @gsfcuniversity.ac.in account.`;
-        setAuthError(domainError);
-        return { success: false, error: domainError };
+      // If logging in from Admin portal, enforce strict Administrator Whitelist
+      if (adminOnly) {
+        if (!isAuthorizedAdminEmail(userEmail)) {
+          await firebaseSignOut(auth);
+          setUser(null);
+          setRole(null);
+          localStorage.removeItem('gsfcu_admin_auth');
+          sessionStorage.removeItem('gsfcu_admin_auth');
+          localStorage.removeItem('gsfcu_user_role');
+          localStorage.removeItem('gsfcu_user_info');
+          const adminError = `Access Denied: '${userEmail}' is not an authorized administrator. Only designated committee accounts (24bt04d224, 24bt04d218, 24bt04d207, 24bt04d238) have access to the Admin Portal.`;
+          setAuthError(adminError);
+          return { success: false, error: adminError };
+        }
+      } else {
+        // Enforce general university domain restriction for student login
+        if (!isAuthorizedUniversityEmail(userEmail)) {
+          await firebaseSignOut(auth);
+          setUser(null);
+          setRole(null);
+          localStorage.removeItem('gsfcu_user_role');
+          localStorage.removeItem('gsfcu_user_info');
+          const domainError = `Access restricted: '${userEmail}' is not an authorized university email. Please sign in with your official @gsfcuniversity.ac.in account.`;
+          setAuthError(domainError);
+          return { success: false, error: domainError };
+        }
       }
 
       const synced = await syncUserProfile(result.user);
       if (synced) {
+        if (adminOnly || isAuthorizedAdminEmail(userEmail)) {
+          localStorage.setItem('gsfcu_admin_auth', 'true');
+          sessionStorage.setItem('gsfcu_admin_auth', 'true');
+        }
         setUser(synced.user);
         setRole(synced.role);
         return { success: true, user: synced.user, role: synced.role };

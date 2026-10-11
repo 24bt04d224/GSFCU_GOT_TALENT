@@ -289,6 +289,26 @@ def build_pdf(filename="GSFCU_GOT_TALENT_CHANGES_REPORT.pdf"):
             Paragraph("<code>.oxlintrc.json</code>", code_style),
             Paragraph("Linter Configuration", body_style),
             Paragraph("Added <code>ignorePatterns</code> for <code>.agents/**</code>, <code>dist/**</code>, and <code>node_modules/**</code>.", body_style)
+        ],
+        [
+            Paragraph("<code>src/services/firebaseConfig.js</code>", code_style),
+            Paragraph("Security & Access Control", body_style),
+            Paragraph("Enforced strict 4-account administrator whitelist: <code>24bt04d224@gsfcuniversity.ac.in</code>, <code>24bt04d218@gsfcuniversity.ac.in</code>, <code>24bt04d207@gsfcuniversity.ac.in</code>, and <code>24bt04d238@gsfcuniversity.ac.in</code>. Added <code>isAuthorizedAdminEmail()</code> helper.", body_style)
+        ],
+        [
+            Paragraph("<code>src/context/AuthContext.jsx</code>", code_style),
+            Paragraph("Authentication Architecture", body_style),
+            Paragraph("Added <code>adminOnly</code> parameter to <code>signInWithGoogle()</code>. Immediately revokes unauthorized logins, flushes session/local storage, and returns access denial for non-whitelisted emails.", body_style)
+        ],
+        [
+            Paragraph("<code>src/components/GoogleSignInButton.jsx</code>", code_style),
+            Paragraph("UI Primitive", body_style),
+            Paragraph("Added <code>adminOnly</code> prop to pass through to auth context for admin gateway logins.", body_style)
+        ],
+        [
+            Paragraph("<code>src/pages/AdminPage.jsx</code>", code_style),
+            Paragraph("Admin Portal Gate", body_style),
+            Paragraph("Added prominent Google Sign-In button strictly restricted to the 4 admin emails, with an authorized accounts banner and passcode fallback.", body_style)
         ]
     ]
     t_changes = Table(changes_data, colWidths=[160, 110, 234])

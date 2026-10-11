@@ -6,7 +6,8 @@ export default function GoogleSignInButton({
   onSuccess,
   onError,
   className = '',
-  buttonText = 'CONTINUE WITH GOOGLE'
+  buttonText = 'CONTINUE WITH GOOGLE',
+  adminOnly = false
 }) {
   const { signInWithGoogle, loading: authGlobalLoading, error: contextError } = useAuth();
   const [localLoading, setLocalLoading] = useState(false);
@@ -20,7 +21,7 @@ export default function GoogleSignInButton({
     setLocalLoading(true);
 
     try {
-      const res = await signInWithGoogle();
+      const res = await signInWithGoogle({ adminOnly });
       if (res.success) {
         if (onSuccess) onSuccess(res.user, res.role);
       } else {

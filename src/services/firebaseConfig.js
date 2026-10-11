@@ -13,14 +13,25 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || '',
 };
 
-// Admin email whitelist for role assignment
+// Admin email whitelist for role assignment (Authorized Event Administrators)
 export const ADMIN_EMAILS = [
+  '24bt04d224@gsfcuniversity.ac.in',
+  '24bt04d218@gsfcuniversity.ac.in',
+  '24bt04d207@gsfcuniversity.ac.in',
+  '24bt04d238@gsfcuniversity.ac.in',
   'admin@gsfcu.ac.in',
   'talent@gsfcu.ac.in',
   'organizers@gsfcu.ac.in',
   'gsfcutalent2026@gmail.com',
   ...(import.meta.env.VITE_ADMIN_EMAILS ? import.meta.env.VITE_ADMIN_EMAILS.split(',').map(e => e.trim().toLowerCase()) : [])
 ];
+
+// Check if an email is an authorized administrator
+export const isAuthorizedAdminEmail = (email) => {
+  if (!email) return false;
+  const clean = email.toLowerCase().trim();
+  return ADMIN_EMAILS.some((adm) => adm.toLowerCase() === clean);
+};
 
 // Check if an email belongs to the official GSFC University domain
 export const isAuthorizedUniversityEmail = (email) => {

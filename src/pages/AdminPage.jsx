@@ -29,13 +29,13 @@ import {
   fetchBrochureFromCloud,
   uploadBrochurePDF,
   deleteBrochureRecord
-
 } from '../services/registrationService';
+import GoogleSignInButton from '../components/GoogleSignInButton';
 import {
   Users, CheckCircle2, Award, Download, Search,
   Lock, QrCode, Trash2, Eye, RefreshCw, Music,
   Play, Pause, ExternalLink, MessageSquare, Database, LogOut, Plus, Edit2, X, User, Building2,
-  FileText, Upload, Camera
+  FileText, Upload, Camera, ShieldCheck
 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -501,12 +501,55 @@ export default function AdminPage() {
             <span className="text-[10px] font-mono tracking-[2px] text-[#E86F2D] uppercase block mb-1 font-semibold">
               ACCESS RESTRICTED
             </span>
-            <h1 className="font-bebas text-3xl sm:text-4xl text-[#F4E7D0] tracking-wider uppercase mb-3">
+            <h1 className="font-bebas text-3xl sm:text-4xl text-[#F4E7D0] tracking-wider uppercase mb-2">
               ORGANIZER PORTAL
             </h1>
-            <p className="text-xs text-[#C9C5BD] leading-relaxed font-sans mb-6">
-              This area is reserved for authorized GSFCU Got Talent organizing committee members and event administrators.
+            <p className="text-xs text-[#C9C5BD] leading-relaxed font-sans mb-5">
+              Secure control room for authorized GSFC University organizing committee heads and event administrators.
             </p>
+
+            {/* Authorized Admin Whitelist Badge */}
+            <div className="mb-5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-left text-xs font-mono">
+              <div className="font-bold flex items-center gap-1.5 mb-1.5 text-amber-400 text-[11px] uppercase tracking-wider">
+                <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>Authorized Admin Accounts:</span>
+              </div>
+              <div className="space-y-1 text-[11px] text-[#F1E8D8]">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <code>24bt04d224@gsfcuniversity.ac.in</code>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <code>24bt04d218@gsfcuniversity.ac.in</code>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <code>24bt04d207@gsfcuniversity.ac.in</code>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <code>24bt04d238@gsfcuniversity.ac.in</code>
+                </div>
+              </div>
+            </div>
+
+            {/* Primary Option: Google Authentication Button for Admins */}
+            <GoogleSignInButton
+              adminOnly={true}
+              buttonText="SIGN IN WITH GOOGLE (ADMIN ACCESS)"
+              className="mb-5"
+            />
+
+            {/* Divider */}
+            <div className="relative my-5">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-white/10" />
+              </div>
+              <div className="relative flex justify-center text-[10px] font-mono uppercase">
+                <span className="bg-[#0f0e13] px-3 text-[#B5ACA0]">OR EMERGENCY PASSCODE</span>
+              </div>
+            </div>
 
             <form onSubmit={handleLoginSubmit} className="space-y-4 mb-4">
 
@@ -526,9 +569,9 @@ export default function AdminPage() {
 
               <button
                 type="submit"
-                className="w-full bg-[#E86F2D] hover:bg-[#d05e1f] text-[#F1E8D8] font-mono font-bold text-xs uppercase tracking-wider py-3.5 rounded-md shadow-lg shadow-[#E86F2D]/25 transition-all border border-[#E86F2D] flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full bg-[#E86F2D] hover:bg-[#d05e1f] text-[#F1E8D8] font-mono font-bold text-xs uppercase tracking-wider py-3 rounded-md shadow-lg shadow-[#E86F2D]/25 transition-all border border-[#E86F2D] flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>ENTER PORTAL CONSOLE →</span>
+                <span>ENTER WITH PASSCODE →</span>
 
               </button>
             </form>
