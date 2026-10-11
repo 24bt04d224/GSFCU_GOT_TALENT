@@ -455,8 +455,8 @@ export default function AdminPage() {
     return sum + (isNaN(num) ? 1 + (r.teamMembers || []).length : num);
   }, 0);
 
-  // 1. Loading State
-  if (loading) {
+  // 1. Loading State (Only on initial cold-start before auth state is determined)
+  if (loading && !canAccessPortal && !localStorage.getItem('gsfcu_user_role') && !localStorage.getItem('gsfcu_admin_auth')) {
     return (
       <div className="min-h-screen bg-[#08080a] text-[#F4E7D0] flex flex-col justify-between font-sans">
         <Navbar />

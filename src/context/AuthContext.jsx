@@ -196,7 +196,6 @@ export const AuthProvider = ({ children }) => {
   // 1. Google Authentication with Popup (supports student domain check and adminOnly whitelist)
   const signInWithGoogle = async (options = {}) => {
     const { adminOnly = false } = options;
-    setLoading(true);
     setAuthError(null);
 
     // If Firebase is in placeholder/offline mode, provide interactive demo authentication
@@ -223,7 +222,6 @@ export const AuthProvider = ({ children }) => {
       }
       localStorage.setItem('gsfcu_user_role', assignedRole);
       localStorage.setItem('gsfcu_user_info', JSON.stringify(demoUser));
-      setLoading(false);
       return { success: true, user: demoUser, role: assignedRole };
     }
 
@@ -260,16 +258,28 @@ export const AuthProvider = ({ children }) => {
       }
 
       const synced = await syncUserProfile(result.user);
-      if (synced) {
-        if (adminOnly || isAuthorizedAdminEmail(userEmail)) {
-          localStorage.setItem('gsfcu_admin_auth', 'true');
-          sessionStorage.setItem('gsfcu_admin_auth', 'true');
-        }
-        setUser(synced.user);
-        setRole(synced.role);
-        return { success: true, user: synced.user, role: synced.role };
+      const isWhitelisted = isAuthorizedAdminEmail(userEmail);
+      const finalRole = (adminOnly || isWhitelisted) ? 'admin' : (synced?.role || 'student');
+      const finalUser = synced?.user || {
+        uid: result.user.uid,
+        id: result.user.uid,
+        email: userEmail,
+        name: result.user.displayName || userEmail.split('@')[0],
+        displayName: result.user.displayName || userEmail.split('@')[0],
+        photoURL: result.user.photoURL || '',
+        avatar: result.user.photoURL || '',
+        role: finalRole,
+      };
+
+      if (adminOnly || isWhitelisted) {
+        localStorage.setItem('gsfcu_admin_auth', 'true');
+        sessionStorage.setItem('gsfcu_admin_auth', 'true');
       }
-      return { success: true, user: result.user };
+      localStorage.setItem('gsfcu_user_role', finalRole);
+      localStorage.setItem('gsfcu_user_info', JSON.stringify(finalUser));
+      setUser(finalUser);
+      setRole(finalRole);
+      return { success: true, user: finalUser, role: finalRole };
     } catch (err) {
       console.error('Google Sign-In Error:', err);
       let userFriendlyMessage = 'Sign-in failed. Please try again.';
@@ -279,13 +289,15 @@ export const AuthProvider = ({ children }) => {
         userFriendlyMessage = 'Sign-in popup was blocked by your browser. Please allow popups for this site.';
       } else if (err.code === 'auth/cancelled-popup-request') {
         userFriendlyMessage = 'Only one sign-in window can be open at a time.';
+      } else if (err.code === 'auth/unauthorized-domain') {
+        userFriendlyMessage = `Domain '${window.location.hostname}' is not authorized in Firebase Console. Please add '${window.location.hostname}' to Authorized Domains in Firebase Authentication Settings.`;
+      } else if (err.code === 'auth/operation-not-allowed') {
+        userFriendlyMessage = 'Google Sign-in is not enabled in Firebase Console. Please enable Google provider.';
       } else if (err.message) {
         userFriendlyMessage = err.message;
       }
       setAuthError(userFriendlyMessage);
       return { success: false, error: userFriendlyMessage };
-    } finally {
-      setLoading(false);
     }
   };
 
