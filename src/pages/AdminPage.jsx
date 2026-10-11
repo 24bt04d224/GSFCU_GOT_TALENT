@@ -17,6 +17,8 @@ import {
   toggleCheckInStatus,
   deleteRegistration,
   exportRegistrationsCSV,
+  exportRegistrationsJSON,
+  isBackendConfigured,
   generateWhatsAppLink,
   getSponsors,
   fetchSponsorsFromCloud,
@@ -574,12 +576,18 @@ export default function AdminPage() {
               </span>
 
               <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono border ${
-                isSupabaseConfigured()
+                (isSupabaseConfigured() || isBackendConfigured())
                   ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
                   : 'bg-[#E86F2D]/10 border-[#E86F2D]/30 text-[#E86F2D]'
               }`}>
                 <Database className="w-3 h-3" />
-                <span>{isSupabaseConfigured() ? 'SUPABASE CLOUD ACTIVE' : 'LOCAL ENGINE READY'}</span>
+                <span>
+                  {isSupabaseConfigured()
+                    ? 'SUPABASE CLOUD ACTIVE'
+                    : isBackendConfigured()
+                    ? 'RENDER CLOUD DB ACTIVE'
+                    : 'LOCAL ENGINE READY'}
+                </span>
               </div>
             </div>
 
@@ -606,8 +614,16 @@ export default function AdminPage() {
               className="px-4 py-2 rounded-md bg-[#E86F2D] hover:bg-[#d05e1f] border border-[#E86F2D] text-xs font-mono text-[#F1E8D8] font-bold flex items-center gap-2 transition-colors shadow-md cursor-pointer"
             >
               <Download className="w-3.5 h-3.5 text-[#F1E8D8]" />
+              <span>EXPORT CSV</span>
+            </button>
 
-              <span>EXPORT CALL SHEET (CSV)</span>
+            <button
+              onClick={exportRegistrationsJSON}
+              className="px-3.5 py-2 rounded-md bg-[#0f0e13] hover:bg-white/5 border border-amber-500/30 text-xs font-mono text-amber-300 font-bold flex items-center gap-2 transition-colors shadow-md cursor-pointer"
+              title="Download complete JSON database backup"
+            >
+              <Database className="w-3.5 h-3.5 text-amber-300" />
+              <span>BACKUP DB (JSON)</span>
             </button>
 
             <button

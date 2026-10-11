@@ -807,6 +807,35 @@ export const exportRegistrationsCSV = () => {
   document.body.removeChild(link);
 };
 
+/**
+ * Export Complete Database Snapshot as JSON Backup
+ */
+export const exportRegistrationsJSON = () => {
+  const data = getRegistrations();
+  const sponsors = getSponsors();
+  const brochure = getBrochure();
+  const backup = {
+    exportedAt: new Date().toISOString(),
+    event: "GSFCU Got Talent 2026",
+    counts: {
+      registrations: data.length,
+      sponsors: sponsors.length
+    },
+    registrations: data,
+    sponsors: sponsors,
+    brochure: brochure
+  };
+  const jsonStr = JSON.stringify(backup, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `GSFCU_TALENT_DATABASE_BACKUP_${new Date().toISOString().slice(0, 10)}.json`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 const SPONSOR_ENQUIRIES_KEY = 'gsfcu_got_talent_2026_sponsor_enquiries';
 
 export const getSponsorEnquiries = () => {
