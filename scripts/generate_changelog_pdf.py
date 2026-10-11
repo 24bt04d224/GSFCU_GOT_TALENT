@@ -308,7 +308,7 @@ def build_pdf(filename="GSFCU_GOT_TALENT_CHANGES_REPORT.pdf"):
         [
             Paragraph("<code>src/pages/AdminPage.jsx</code>", code_style),
             Paragraph("Admin Portal Gate", body_style),
-            Paragraph("Added prominent Google Sign-In button strictly restricted to the 4 admin emails, with an authorized accounts banner and passcode fallback.", body_style)
+            Paragraph("Added prominent Google Sign-In button strictly restricted to the 4 admin emails with an authorized accounts banner; completely removed emergency passcode input form and divider per security requirements.", body_style)
         ]
     ]
     t_changes = Table(changes_data, colWidths=[160, 110, 234])

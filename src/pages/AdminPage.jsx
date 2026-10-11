@@ -39,7 +39,7 @@ import {
 } from 'lucide-react';
 
 export default function AdminPage() {
-  const { user, role, loading, login, logout, canAccessPortal, isAdmin, isCommittee } = useAuth();
+  const { user, role, loading, logout, canAccessPortal, isAdmin, isCommittee } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -56,9 +56,6 @@ export default function AdminPage() {
     }
   }, [location.pathname]);
 
-
-  const [passcodeInput, setPasscodeInput] = useState('');
-  const [passcodeError, setPasscodeError] = useState('');
   
   const [registrations, setRegistrations] = useState(() => getRegistrations());
   const [searchTerm, setSearchTerm] = useState('');
@@ -153,15 +150,6 @@ export default function AdminPage() {
   }, [canAccessPortal]);
 
 
-
-  const handleLoginSubmit = async (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    setPasscodeError('');
-    const res = await login({ passcode: passcodeInput });
-    if (!res.success) {
-      setPasscodeError(res.error || 'Invalid credentials.');
-    }
-  };
 
 
   const handleStatusChange = async (id, newStatus) => {
@@ -541,40 +529,6 @@ export default function AdminPage() {
               className="mb-5"
             />
 
-            {/* Divider */}
-            <div className="relative my-5">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/10" />
-              </div>
-              <div className="relative flex justify-center text-[10px] font-mono uppercase">
-                <span className="bg-[#0f0e13] px-3 text-[#B5ACA0]">OR EMERGENCY PASSCODE</span>
-              </div>
-            </div>
-
-            <form onSubmit={handleLoginSubmit} className="space-y-4 mb-4">
-
-              <div>
-                <input
-                  type="password"
-                  value={passcodeInput}
-                  onChange={(e) => setPasscodeInput(e.target.value)}
-                  placeholder="Enter Committee Passcode"
-                  className="w-full bg-[#08080a] border border-[#E86F2D]/30 rounded-lg px-4 py-3 text-sm text-[#F4E7D0] placeholder-[#C9C5BD]/40 focus:outline-none focus:border-[#E86F2D] font-mono text-center tracking-widest"
-
-                />
-                {passcodeError && (
-                  <p className="text-xs text-red-400 mt-2 font-mono">{passcodeError}</p>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-[#E86F2D] hover:bg-[#d05e1f] text-[#F1E8D8] font-mono font-bold text-xs uppercase tracking-wider py-3 rounded-md shadow-lg shadow-[#E86F2D]/25 transition-all border border-[#E86F2D] flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>ENTER WITH PASSCODE →</span>
-
-              </button>
-            </form>
 
             <div className="mt-6 pt-4 border-t border-white/5">
               <Link
