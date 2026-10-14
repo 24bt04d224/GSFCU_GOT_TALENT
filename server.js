@@ -259,6 +259,29 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // 5b. Registrations: DELETE by ID (/api/registrations/:id)
+  if (regIdMatch && method === 'DELETE') {
+    try {
+      const targetId = decodeURIComponent(regIdMatch[1]);
+      const db = readDb();
+      const initialLength = db.registrations.length;
+      db.registrations = db.registrations.filter(r => r.id !== targetId);
+
+      if (db.registrations.length === initialLength) {
+        return sendJson(res, 404, { success: false, error: 'Registration not found' });
+      }
+
+      writeDb(db);
+      return sendJson(res, 200, {
+        success: true,
+        message: 'Registration deleted successfully',
+        id: targetId
+      });
+    } catch (err) {
+      return sendJson(res, 400, { success: false, error: err.message });
+    }
+  }
+
   // 6. Sponsors: GET & POST
   if (pathname === '/api/sponsors') {
     const db = readDb();

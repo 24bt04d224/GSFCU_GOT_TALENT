@@ -184,3 +184,25 @@ export const fetchSponsorsFromBackend = async () => {
     return null;
   }
 };
+
+/**
+ * Delete registration from Render backend
+ */
+export const deleteRegistrationFromBackend = async (id) => {
+  if (!isBackendConfigured()) return null;
+  const base = getBackendUrl();
+
+  try {
+    const res = await fetch(`${base}/api/registrations/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const result = await res.json();
+    return result;
+  } catch (err) {
+    console.warn('[Render Backend] Failed to delete registration:', err.message);
+    return null;
+  }
+};
+

@@ -28,6 +28,7 @@ import {
   saveRegistrationToBackend,
   checkInParticipantOnBackend,
   updateRegistrationOnBackend,
+  deleteRegistrationFromBackend,
   getBackendUrl,
   setBackendUrl,
   checkBackendHealth
@@ -62,7 +63,21 @@ export const getRegistrations = () => {
  * Fetch registrations from Cloud (Firestore -> Render -> Supabase -> LocalStorage)
  */
 export const fetchRegistrationsFromCloud = async () => {
-  // 1. Try Firebase Firestore (Primary Cloud Database)
+  // 1. PRIMARY: Try Render Backend
+  if (isBackendConfigured()) {
+    try {
+      const backendData = await fetchRegistrationsFromBackend();
+      if (backendData && Array.isArray(backendData)) {
+        const cleaned = backendData.filter(item => !LEGACY_SAMPLE_IDS.includes(item.id));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
+        return cleaned;
+      }
+    } catch (err) {
+      console.warn("[Render Backend] Fetch notice, falling back:", err.message);
+    }
+  }
+
+  // 2. SECONDARY: Try Firebase Firestore Cloud Database
   if (isFirebaseConfigured() && db) {
     try {
       const q = query(collection(db, 'registrations'), orderBy('created_at', 'desc'));
@@ -114,20 +129,6 @@ export const fetchRegistrationsFromCloud = async () => {
       }
     } catch (err) {
       console.warn("[Firestore] Fetch warning, falling back to next engine:", err.message);
-    }
-  }
-
-  // 2. Try Render Backend if configured
-  if (isBackendConfigured()) {
-    try {
-      const backendData = await fetchRegistrationsFromBackend();
-      if (backendData && Array.isArray(backendData) && backendData.length > 0) {
-        const cleaned = backendData.filter(item => !LEGACY_SAMPLE_IDS.includes(item.id));
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
-        return cleaned;
-      }
-    } catch (err) {
-      console.warn("Render backend fetch error, trying next engine:", err);
     }
   }
 
@@ -225,7 +226,22 @@ export const subscribeToRegistrations = (onDataChanged) => {
     }
   }
 
-  // 1. Firebase Firestore Realtime Subscription (Primary)
+  // 1. Render Backend Polling (Primary Sync)
+  let renderPollTimer = null;
+  if (isBackendConfigured()) {
+    renderPollTimer = setInterval(async () => {
+      try {
+        const freshData = await fetchRegistrationsFromCloud();
+        if (freshData && Array.isArray(freshData)) {
+          onDataChanged(freshData);
+        }
+      } catch {
+        // silent polling ignore
+      }
+    }, 4000);
+  }
+
+  // 2. Firebase Firestore Realtime Subscription (Secondary)
   let unsubscribeFirestore = null;
   if (isFirebaseConfigured() && db) {
     try {
@@ -288,7 +304,7 @@ export const subscribeToRegistrations = (onDataChanged) => {
     }
   }
 
-  // 2. Supabase Realtime Subscription (Fallback)
+  // 3. Supabase Realtime Subscription (Tertiary)
   let supabaseChannel = null;
   if (isSupabaseConfigured() && supabase) {
     try {
@@ -309,6 +325,7 @@ export const subscribeToRegistrations = (onDataChanged) => {
   }
 
   return () => {
+    if (renderPollTimer) clearInterval(renderPollTimer);
     if (unsubscribeFirestore) unsubscribeFirestore();
     if (supabaseChannel && supabase) supabase.removeChannel(supabaseChannel);
     window.removeEventListener('registrationsUpdated', handleLocalUpdate);
@@ -520,7 +537,17 @@ export const saveRegistration = async (data, audioFile = null) => {
     registeredAt: new Date().toISOString()
   };
 
-  // 2. PRIMARY: Save to Firebase Firestore Cloud Database
+  // 2. PRIMARY: Save to Render Cloud Backend
+  if (isBackendConfigured()) {
+    try {
+      await saveRegistrationToBackend(newRegistration);
+      console.log(`[Render Backend] Registration ${newRegistration.id} saved to Cloud successfully!`);
+    } catch (err) {
+      console.warn("[Render Backend] Registration save notice:", err.message);
+    }
+  }
+
+  // 3. SECONDARY: Save to Firebase Firestore Cloud Database (Non-blocking backup)
   if (isFirebaseConfigured() && db) {
     try {
       const firestorePayload = {
@@ -560,22 +587,9 @@ export const saveRegistration = async (data, audioFile = null) => {
         createdAt: serverTimestamp()
       };
       await setDoc(doc(db, 'registrations', newRegistration.id), firestorePayload);
-      console.log(`[Firestore] Registration ${newRegistration.id} saved to Cloud successfully!`);
+      console.log(`[Firestore] Registration ${newRegistration.id} synced to Firestore backup`);
     } catch (err) {
-      console.error("[Firestore] Registration save error:", err);
-      if (err.code === 'permission-denied') {
-        throw new Error('Firestore Permission Error: Please update your Firestore Security Rules in Firebase Console to allow write access to "registrations".');
-      }
-      throw new Error(`Cloud database error: ${err.message || 'Unable to complete cloud registration.'}`);
-    }
-  }
-
-  // 3. SECONDARY: Save to Render Backend if configured
-  if (isBackendConfigured()) {
-    try {
-      await saveRegistrationToBackend(newRegistration);
-    } catch (err) {
-      console.warn("Render backend insert notice:", err.message);
+      console.warn("[Firestore] Secondary save notice:", err.message);
     }
   }
 
@@ -959,7 +973,17 @@ export const deleteRegistration = async (id) => {
   const updated = current.filter((item) => item.id !== id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
-  // 1. Firebase Firestore delete
+  // 1. Render backend delete
+  if (isBackendConfigured()) {
+    try {
+      await deleteRegistrationFromBackend(id);
+      console.log(`[Render Backend] Deleted registration ${id}`);
+    } catch (e) {
+      console.warn("[Render Backend] delete notice:", e.message);
+    }
+  }
+
+  // 2. Firebase Firestore delete
   if (isFirebaseConfigured() && db) {
     try {
       await deleteDoc(doc(db, 'registrations', id));
@@ -969,7 +993,7 @@ export const deleteRegistration = async (id) => {
     }
   }
 
-  // 2. Supabase delete
+  // 3. Supabase delete
   if (isSupabaseConfigured() && supabase) {
     try {
       await supabase.from('registrations').delete().eq('id', id);

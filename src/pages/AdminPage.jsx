@@ -574,18 +574,18 @@ export default function AdminPage() {
               </span>
 
               <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono border ${
-                (isFirebaseConfigured() || isSupabaseConfigured() || isBackendConfigured())
+                (isBackendConfigured() || isFirebaseConfigured() || isSupabaseConfigured())
                   ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
                   : 'bg-[#E86F2D]/10 border-[#E86F2D]/30 text-[#E86F2D]'
               }`}>
                 <Database className="w-3 h-3" />
                 <span>
-                  {isFirebaseConfigured()
+                  {isBackendConfigured()
+                    ? 'RENDER CLOUD ACTIVE'
+                    : isFirebaseConfigured()
                     ? 'FIRESTORE CLOUD ACTIVE'
                     : isSupabaseConfigured()
                     ? 'SUPABASE CLOUD ACTIVE'
-                    : isBackendConfigured()
-                    ? 'RENDER CLOUD DB ACTIVE'
                     : 'LOCAL ENGINE READY'}
                 </span>
               </div>
