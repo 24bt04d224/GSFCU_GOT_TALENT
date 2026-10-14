@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 // Safely decode Firebase Web API Key for production deployment without tripping GitHub scanners
 const getFirebaseApiKey = () => {
@@ -95,9 +96,10 @@ if (!getApps().length) {
   app = getApp();
 }
 
-// Initialize Firebase Auth & Firestore instances
+// Initialize Firebase Auth, Firestore & Storage instances
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 // Configure Google Auth Provider
 export const googleProvider = new GoogleAuthProvider();

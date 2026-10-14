@@ -1,11 +1,27 @@
 /**
  * GSFCU Got Talent 2026 - Registration & Data Persistence Service
- * Supports dual-engine operation:
- *  1. Supabase Cloud PostgreSQL & Audio Bucket (when VITE_SUPABASE_URL and KEY are set)
- *  2. LocalStorage Persistence Fallback (zero configuration mode)
+ * Supports multi-engine operation with automatic fallback:
+ *  1. Firebase Firestore (Primary Cloud Database & Realtime Sync)
+ *  2. Render Cloud Backend (Secondary Web Service)
+ *  3. Supabase Cloud PostgreSQL (Tertiary Cloud Database)
+ *  4. LocalStorage Persistence Fallback (Zero-configuration offline mode)
  */
 
 import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { db, storage, isFirebaseConfigured } from './firebaseConfig';
+import {
+  collection,
+  doc,
+  setDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  serverTimestamp
+} from 'firebase/firestore';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
   isBackendConfigured,
   fetchRegistrationsFromBackend,
@@ -43,14 +59,69 @@ export const getRegistrations = () => {
 };
 
 /**
- * Fetch registrations from Supabase Cloud (if connected), else fallback to localStorage
+ * Fetch registrations from Cloud (Firestore -> Render -> Supabase -> LocalStorage)
  */
 export const fetchRegistrationsFromCloud = async () => {
-  // 1. Try Render Backend first if configured
+  // 1. Try Firebase Firestore (Primary Cloud Database)
+  if (isFirebaseConfigured() && db) {
+    try {
+      const q = query(collection(db, 'registrations'), orderBy('created_at', 'desc'));
+      const snapshot = await getDocs(q);
+      const firestoreData = [];
+      snapshot.forEach((docSnap) => {
+        const row = docSnap.data();
+        if (!LEGACY_SAMPLE_IDS.includes(docSnap.id)) {
+          let parsedMembers = [];
+          if (row.team_members) {
+            try {
+              parsedMembers = typeof row.team_members === 'string' ? JSON.parse(row.team_members) : row.team_members;
+            } catch {
+              parsedMembers = [];
+            }
+          } else if (Array.isArray(row.teamMembers)) {
+            parsedMembers = row.teamMembers;
+          }
+          firestoreData.push({
+            id: docSnap.id,
+            fullName: row.full_name || row.fullName || '',
+            enrollmentNo: row.enrollment_no || row.enrollmentNo || '',
+            schoolDept: row.school_dept || row.schoolDept || '',
+            semester: row.semester || '',
+            phone: row.phone || '',
+            email: row.email || '',
+            category: row.category || '',
+            participationType: row.participation_type || row.participationType || 'Solo',
+            participationFormat: row.participation_format || row.participationFormat || (row.participation_type ? row.participation_type.toLowerCase() : 'solo'),
+            teamMembers: parsedMembers,
+            performanceName: row.performance_name || row.performanceName || '',
+            numParticipants: row.num_participants || row.numParticipants || (1 + parsedMembers.length),
+            description: row.description || '',
+            trackUrl: row.track_url || row.trackUrl || '',
+            trackFileName: row.track_file_name || row.trackFileName || '',
+            driveLink: row.drive_link || row.driveLink || '',
+            status: row.status || 'Registered',
+            checkedIn: Boolean(row.checked_in ?? row.checkedIn),
+            checkInTime: row.check_in_time || row.checkInTime || null,
+            slotTime: row.slotTime || "22 Oct 2026 • TBA",
+            registeredAt: row.created_at?.toDate ? row.created_at.toDate().toISOString() : (row.created_at || row.registeredAt || new Date().toISOString())
+          });
+        }
+      });
+
+      if (firestoreData.length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(firestoreData));
+        return firestoreData;
+      }
+    } catch (err) {
+      console.warn("[Firestore] Fetch warning, falling back to next engine:", err.message);
+    }
+  }
+
+  // 2. Try Render Backend if configured
   if (isBackendConfigured()) {
     try {
       const backendData = await fetchRegistrationsFromBackend();
-      if (backendData && Array.isArray(backendData)) {
+      if (backendData && Array.isArray(backendData) && backendData.length > 0) {
         const cleaned = backendData.filter(item => !LEGACY_SAMPLE_IDS.includes(item.id));
         localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
         return cleaned;
@@ -60,7 +131,7 @@ export const fetchRegistrationsFromCloud = async () => {
     }
   }
 
-  // 2. Try Supabase Cloud
+  // 3. Try Supabase Cloud
   if (!isSupabaseConfigured() || !supabase) {
     return getRegistrations();
   }
@@ -76,7 +147,7 @@ export const fetchRegistrationsFromCloud = async () => {
       return getRegistrations();
     }
 
-    if (data) {
+    if (data && data.length > 0) {
       const mapped = data
         .filter(row => !LEGACY_SAMPLE_IDS.includes(row.id))
         .map((row) => {
@@ -127,19 +198,12 @@ export const fetchRegistrationsFromCloud = async () => {
 };
 
 /**
- * Realtime Subscription for Registrations Table
- */
-/**
- * Realtime Subscription for Registrations Table
+ * Realtime Subscription for Registrations Table (Firestore + Supabase + Local Storage Broadcast)
  */
 export const subscribeToRegistrations = (onDataChanged) => {
   const handleLocalUpdate = async () => {
-    if (isSupabaseConfigured() && supabase) {
-      const freshData = await fetchRegistrationsFromCloud();
-      onDataChanged(freshData);
-    } else {
-      onDataChanged(getRegistrations());
-    }
+    const freshData = await fetchRegistrationsFromCloud();
+    onDataChanged(freshData);
   };
 
   const handleBroadcast = (event) => {
@@ -161,28 +225,92 @@ export const subscribeToRegistrations = (onDataChanged) => {
     }
   }
 
-  if (!isSupabaseConfigured() || !supabase) {
-    return () => {
-      window.removeEventListener('registrationsUpdated', handleLocalUpdate);
-      window.removeEventListener('storage', handleLocalUpdate);
-      if (bc) bc.close();
-    };
+  // 1. Firebase Firestore Realtime Subscription (Primary)
+  let unsubscribeFirestore = null;
+  if (isFirebaseConfigured() && db) {
+    try {
+      const q = query(collection(db, 'registrations'), orderBy('created_at', 'desc'));
+      unsubscribeFirestore = onSnapshot(
+        q,
+        (snapshot) => {
+          const firestoreData = [];
+          snapshot.forEach((docSnap) => {
+            const row = docSnap.data();
+            if (!LEGACY_SAMPLE_IDS.includes(docSnap.id)) {
+              let parsedMembers = [];
+              if (row.team_members) {
+                try {
+                  parsedMembers = typeof row.team_members === 'string' ? JSON.parse(row.team_members) : row.team_members;
+                } catch {
+                  parsedMembers = [];
+                }
+              } else if (Array.isArray(row.teamMembers)) {
+                parsedMembers = row.teamMembers;
+              }
+              firestoreData.push({
+                id: docSnap.id,
+                fullName: row.full_name || row.fullName || '',
+                enrollmentNo: row.enrollment_no || row.enrollmentNo || '',
+                schoolDept: row.school_dept || row.schoolDept || '',
+                semester: row.semester || '',
+                phone: row.phone || '',
+                email: row.email || '',
+                category: row.category || '',
+                participationType: row.participation_type || row.participationType || 'Solo',
+                participationFormat: row.participation_format || row.participationFormat || (row.participation_type ? row.participation_type.toLowerCase() : 'solo'),
+                teamMembers: parsedMembers,
+                performanceName: row.performance_name || row.performanceName || '',
+                numParticipants: row.num_participants || row.numParticipants || (1 + parsedMembers.length),
+                description: row.description || '',
+                trackUrl: row.track_url || row.trackUrl || '',
+                trackFileName: row.track_file_name || row.trackFileName || '',
+                driveLink: row.drive_link || row.driveLink || '',
+                status: row.status || 'Registered',
+                checkedIn: Boolean(row.checked_in ?? row.checkedIn),
+                checkInTime: row.check_in_time || row.checkInTime || null,
+                slotTime: row.slotTime || "22 Oct 2026 • TBA",
+                registeredAt: row.created_at?.toDate ? row.created_at.toDate().toISOString() : (row.created_at || row.registeredAt || new Date().toISOString())
+              });
+            }
+          });
+
+          if (firestoreData.length > 0) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(firestoreData));
+            onDataChanged(firestoreData);
+          }
+        },
+        (err) => {
+          console.warn("[Firestore] Realtime subscription warning:", err.message);
+        }
+      );
+    } catch (err) {
+      console.warn("[Firestore] onSnapshot exception:", err);
+    }
   }
 
-  const channel = supabase
-    .channel('public:registrations')
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'registrations' },
-      async () => {
-        const freshData = await fetchRegistrationsFromCloud();
-        onDataChanged(freshData);
-      }
-    )
-    .subscribe();
+  // 2. Supabase Realtime Subscription (Fallback)
+  let supabaseChannel = null;
+  if (isSupabaseConfigured() && supabase) {
+    try {
+      supabaseChannel = supabase
+        .channel('public:registrations')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'registrations' },
+          async () => {
+            const freshData = await fetchRegistrationsFromCloud();
+            onDataChanged(freshData);
+          }
+        )
+        .subscribe();
+    } catch (e) {
+      console.warn("Supabase channel error:", e);
+    }
+  }
 
   return () => {
-    supabase.removeChannel(channel);
+    if (unsubscribeFirestore) unsubscribeFirestore();
+    if (supabaseChannel && supabase) supabase.removeChannel(supabaseChannel);
     window.removeEventListener('registrationsUpdated', handleLocalUpdate);
     window.removeEventListener('storage', handleLocalUpdate);
     if (bc) bc.close();
@@ -249,13 +377,29 @@ const notifyRegistrationsChanged = () => {
 
 
 /**
- * Upload Audio File to Supabase Storage or create client-side Blob URL
+ * Upload Audio File to Firebase Storage, Supabase Storage, or create client-side Blob URL
  */
 export const uploadAudioTrack = async (file, candidateId) => {
   if (!file) return { url: '', fileName: '' };
 
   const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
 
+  // 1. Try Firebase Cloud Storage
+  if (isFirebaseConfigured() && storage) {
+    try {
+      const fileReference = storageRef(storage, `audio-tracks/${candidateId}_${Date.now()}_${sanitizedFileName}`);
+      const uploadResult = await uploadBytes(fileReference, file);
+      const downloadUrl = await getDownloadURL(uploadResult.ref);
+      return {
+        url: downloadUrl,
+        fileName: sanitizedFileName
+      };
+    } catch (e) {
+      console.warn("[Firebase Storage] Upload warning, falling back:", e.message);
+    }
+  }
+
+  // 2. Try Supabase Storage
   if (isSupabaseConfigured() && supabase) {
     try {
       const filePath = `${candidateId}/${Date.now()}_${sanitizedFileName}`;
@@ -291,12 +435,31 @@ export const uploadAudioTrack = async (file, candidateId) => {
 };
 
 /**
- * Save Registration (Dual Engine: Supabase Cloud + LocalStorage)
+ * Save Registration (Triple Engine: Firebase Firestore + Render + Supabase + LocalStorage)
  */
 export const saveRegistration = async (data, audioFile = null) => {
   let current = getRegistrations();
 
-  // 1. Duplicate Check for Primary Participant in cloud & local
+  // 1. Duplicate Check for Primary Participant
+  // 1a. Check Firestore
+  if (isFirebaseConfigured() && db) {
+    try {
+      const snap = await getDocs(collection(db, 'registrations'));
+      snap.forEach(d => {
+        const item = d.data();
+        const enroll = (item.enrollment_no || item.enrollmentNo || '').toLowerCase().trim();
+        if (enroll === data.enrollmentNo.toLowerCase().trim()) {
+          throw new Error(`Enrollment number ${data.enrollmentNo} is already registered under ID ${d.id}.`);
+        }
+      });
+    } catch (err) {
+      if (err.message && err.message.includes('already registered')) {
+        throw err;
+      }
+    }
+  }
+
+  // 1b. Check Supabase
   if (isSupabaseConfigured() && supabase) {
     try {
       const { data: cloudItems } = await supabase
@@ -314,6 +477,7 @@ export const saveRegistration = async (data, audioFile = null) => {
     }
   }
 
+  // 1c. Check Local
   const existingLocal = current.find(
     (item) => item.enrollmentNo.toLowerCase().trim() === data.enrollmentNo.toLowerCase().trim()
   );
@@ -356,7 +520,57 @@ export const saveRegistration = async (data, audioFile = null) => {
     registeredAt: new Date().toISOString()
   };
 
-  // 1.5. Save to Render Backend if configured
+  // 2. PRIMARY: Save to Firebase Firestore Cloud Database
+  if (isFirebaseConfigured() && db) {
+    try {
+      const firestorePayload = {
+        id: newRegistration.id,
+        full_name: newRegistration.fullName,
+        fullName: newRegistration.fullName,
+        enrollment_no: newRegistration.enrollmentNo,
+        enrollmentNo: newRegistration.enrollmentNo,
+        school_dept: newRegistration.schoolDept,
+        schoolDept: newRegistration.schoolDept,
+        semester: newRegistration.semester,
+        phone: newRegistration.phone,
+        email: newRegistration.email,
+        category: newRegistration.category,
+        participation_type: newRegistration.participationType,
+        participationType: newRegistration.participationType,
+        participation_format: newRegistration.participationFormat,
+        participationFormat: newRegistration.participationFormat,
+        team_members: newRegistration.teamMembers,
+        teamMembers: newRegistration.teamMembers,
+        performance_name: newRegistration.performanceName,
+        performanceName: newRegistration.performanceName,
+        num_participants: String(newRegistration.numParticipants),
+        numParticipants: String(newRegistration.numParticipants),
+        description: newRegistration.description || '',
+        track_url: newRegistration.trackUrl || '',
+        trackUrl: newRegistration.trackUrl || '',
+        track_file_name: newRegistration.trackFileName || '',
+        trackFileName: newRegistration.trackFileName || '',
+        drive_link: newRegistration.driveLink || '',
+        driveLink: newRegistration.driveLink || '',
+        status: newRegistration.status,
+        checked_in: newRegistration.checkedIn,
+        checkedIn: newRegistration.checkedIn,
+        created_at: newRegistration.registeredAt,
+        registeredAt: newRegistration.registeredAt,
+        createdAt: serverTimestamp()
+      };
+      await setDoc(doc(db, 'registrations', newRegistration.id), firestorePayload);
+      console.log(`[Firestore] Registration ${newRegistration.id} saved to Cloud successfully!`);
+    } catch (err) {
+      console.error("[Firestore] Registration save error:", err);
+      if (err.code === 'permission-denied') {
+        throw new Error('Firestore Permission Error: Please update your Firestore Security Rules in Firebase Console to allow write access to "registrations".');
+      }
+      throw new Error(`Cloud database error: ${err.message || 'Unable to complete cloud registration.'}`);
+    }
+  }
+
+  // 3. SECONDARY: Save to Render Backend if configured
   if (isBackendConfigured()) {
     try {
       await saveRegistrationToBackend(newRegistration);
@@ -365,7 +579,7 @@ export const saveRegistration = async (data, audioFile = null) => {
     }
   }
 
-  // 2. Save to Supabase if configured
+  // 4. TERTIARY: Save to Supabase if configured
   if (isSupabaseConfigured() && supabase) {
     const fullPayload = {
       id: newRegistration.id,
@@ -403,12 +617,11 @@ export const saveRegistration = async (data, audioFile = null) => {
     }
 
     if (error) {
-      console.error("Supabase registration insert error:", error);
-      throw new Error(`Database error: ${error.message || 'Unable to complete registration.'}`);
+      console.warn("Supabase registration insert warning:", error.message);
     }
   }
 
-  // 3. Always persist locally
+  // 5. Always persist locally
   const updated = [newRegistration, ...current.filter(item => item.id !== newRegistration.id)];
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
@@ -444,6 +657,42 @@ export const updateRegistrationRecord = async (id, updatedFields) => {
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
+  // 1. Firebase Firestore sync
+  if (isFirebaseConfigured() && db) {
+    try {
+      const target = updated.find(r => r.id === id);
+      if (target) {
+        await updateDoc(doc(db, 'registrations', id), {
+          full_name: target.fullName,
+          fullName: target.fullName,
+          enrollment_no: target.enrollmentNo,
+          enrollmentNo: target.enrollmentNo,
+          school_dept: target.schoolDept,
+          schoolDept: target.schoolDept,
+          semester: target.semester,
+          phone: target.phone,
+          email: target.email,
+          category: target.category,
+          participation_type: target.participationType,
+          participationType: target.participationType,
+          participation_format: target.participationFormat,
+          participationFormat: target.participationFormat,
+          team_members: target.teamMembers,
+          teamMembers: target.teamMembers,
+          performance_name: target.performanceName,
+          performanceName: target.performanceName,
+          num_participants: String(target.numParticipants),
+          numParticipants: String(target.numParticipants),
+          description: target.description || '',
+          updatedAt: serverTimestamp()
+        });
+      }
+    } catch (e) {
+      console.warn("[Firestore] updateRegistrationRecord warning:", e.message);
+    }
+  }
+
+  // 2. Supabase sync
   if (isSupabaseConfigured() && supabase) {
     try {
       const target = updated.find(r => r.id === id);
@@ -476,6 +725,7 @@ export const updateRegistrationRecord = async (id, updatedFields) => {
     }
   }
 
+  // 3. Render Backend sync
   if (isBackendConfigured()) {
     try {
       const target = updated.find(r => r.id === id);
@@ -491,7 +741,6 @@ export const updateRegistrationRecord = async (id, updatedFields) => {
   return updated;
 };
 
-
 export const updateRegistrationStatus = async (id, newStatus) => {
   const current = getRegistrations();
   const updated = current.map((item) =>
@@ -499,6 +748,19 @@ export const updateRegistrationStatus = async (id, newStatus) => {
   );
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
+  // 1. Firebase Firestore sync
+  if (isFirebaseConfigured() && db) {
+    try {
+      await updateDoc(doc(db, 'registrations', id), {
+        status: newStatus,
+        updatedAt: serverTimestamp()
+      });
+    } catch (e) {
+      console.warn("[Firestore] status update warning:", e.message);
+    }
+  }
+
+  // 2. Render backend sync
   if (isBackendConfigured()) {
     try {
       await updateRegistrationOnBackend(id, { status: newStatus });
@@ -507,6 +769,7 @@ export const updateRegistrationStatus = async (id, newStatus) => {
     }
   }
 
+  // 3. Supabase sync
   if (isSupabaseConfigured() && supabase) {
     try {
       await supabase.from('registrations').update({ status: newStatus }).eq('id', id);
@@ -527,10 +790,25 @@ export const toggleCheckInStatus = async (id) => {
 
   const updated = current.map((item) =>
     item.id === id ? { ...item, checkedIn: newCheckedIn, checkInTime } : item
-
   );
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
+  // 1. Firebase Firestore sync
+  if (isFirebaseConfigured() && db) {
+    try {
+      await updateDoc(doc(db, 'registrations', id), {
+        checked_in: newCheckedIn,
+        checkedIn: newCheckedIn,
+        check_in_time: checkInTime,
+        checkInTime: checkInTime,
+        updatedAt: serverTimestamp()
+      });
+    } catch (e) {
+      console.warn("[Firestore] check-in update warning:", e.message);
+    }
+  }
+
+  // 2. Render backend sync
   if (isBackendConfigured()) {
     try {
       await updateRegistrationOnBackend(id, { checkedIn: newCheckedIn, checkInTime });
@@ -539,10 +817,10 @@ export const toggleCheckInStatus = async (id) => {
     }
   }
 
+  // 3. Supabase sync
   if (isSupabaseConfigured() && supabase) {
     try {
       await supabase.from('registrations').update({ checked_in: newCheckedIn, check_in_time: checkInTime }).eq('id', id);
-
     } catch (e) {
       console.warn("Supabase check-in update exception:", e);
     }
@@ -586,7 +864,14 @@ export const processQrCheckIn = async (qrInput) => {
     (item.enrollmentNo && item.enrollmentNo.toLowerCase().trim() === targetId.toLowerCase().trim())
   );
 
-  if (!target && isSupabaseConfigured() && supabase) {
+  if (!target && isFirebaseConfigured() && db) {
+    const freshCloud = await fetchRegistrationsFromCloud();
+    current = freshCloud;
+    target = current.find((item) => 
+      item.id.toUpperCase() === targetId.toUpperCase() ||
+      (item.enrollmentNo && item.enrollmentNo.toLowerCase().trim() === targetId.toLowerCase().trim())
+    );
+  } else if (!target && isSupabaseConfigured() && supabase) {
     const freshCloud = await fetchRegistrationsFromCloud();
     current = freshCloud;
     target = current.find((item) => 
@@ -622,6 +907,22 @@ export const processQrCheckIn = async (qrInput) => {
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
+  // 1. Firebase Firestore sync
+  if (isFirebaseConfigured() && db) {
+    try {
+      await updateDoc(doc(db, 'registrations', target.id), {
+        checked_in: true,
+        checkedIn: true,
+        check_in_time: checkInTime,
+        checkInTime: checkInTime,
+        updatedAt: serverTimestamp()
+      });
+    } catch (e) {
+      console.warn("[Firestore] QR check-in warning:", e.message);
+    }
+  }
+
+  // 2. Render backend sync
   if (isBackendConfigured()) {
     try {
       await checkInParticipantOnBackend(target.id);
@@ -630,6 +931,7 @@ export const processQrCheckIn = async (qrInput) => {
     }
   }
 
+  // 3. Supabase sync
   if (isSupabaseConfigured() && supabase) {
     try {
       await supabase
@@ -652,12 +954,22 @@ export const processQrCheckIn = async (qrInput) => {
   };
 };
 
-
 export const deleteRegistration = async (id) => {
   const current = getRegistrations();
   const updated = current.filter((item) => item.id !== id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
+  // 1. Firebase Firestore delete
+  if (isFirebaseConfigured() && db) {
+    try {
+      await deleteDoc(doc(db, 'registrations', id));
+      console.log(`[Firestore] Deleted registration ${id}`);
+    } catch (e) {
+      console.warn("[Firestore] delete warning:", e.message);
+    }
+  }
+
+  // 2. Supabase delete
   if (isSupabaseConfigured() && supabase) {
     try {
       await supabase.from('registrations').delete().eq('id', id);

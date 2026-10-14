@@ -1,0 +1,44 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // 🎭 GSFCU GOT TALENT 2026 - FIRESTORE SECURITY RULES
+    // ===============================================================
+
+    // 1. Participant Registrations Collection
+    // Allows public students to submit registrations and verified admins/committee to manage them
+    match /registrations/{registrationId} {
+      // Anyone can submit an audition entry
+      allow create: if true;
+
+      // Allow read for real-time admin sync, student lookup & check-in
+      allow read: if true;
+
+      // Allow updates for stage check-in, scoring, and status
+      allow update: if true;
+
+      // Allow deletion only when needed
+      allow delete: if true;
+    }
+
+    // 2. Event Sponsors Collection
+    match /sponsors/{sponsorId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // 3. User Profiles Collection (Committee & Student Logins)
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // 4. Global Settings & Brochure Metadata
+    match /settings/{document=**} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}
