@@ -1576,6 +1576,113 @@ export const deleteBrochureRecord = async () => {
   return null;
 };
 
+/**
+ * One-Click Migration: Pulls past data from Firebase Firestore and LocalStorage into the AWS EC2 Backend
+ */
+export const migrateFirestoreToBackend = async () => {
+  let migratedRegistrations = 0;
+  let migratedSponsors = 0;
+  const errors = [];
+
+  // 1. Try migrating from Firebase Firestore
+  if (isFirebaseConfigured() && db) {
+    try {
+      const q = query(collection(db, 'registrations'));
+      const snapshot = await getDocs(q);
+      for (const docSnap of snapshot.docs) {
+        try {
+          const row = docSnap.data();
+          let parsedMembers = [];
+          if (row.team_members) {
+            try {
+              parsedMembers = typeof row.team_members === 'string' ? JSON.parse(row.team_members) : row.team_members;
+            } catch {
+              parsedMembers = [];
+            }
+          } else if (Array.isArray(row.teamMembers)) {
+            parsedMembers = row.teamMembers;
+          }
+
+          const regPayload = {
+            id: docSnap.id,
+            fullName: row.full_name || row.fullName || '',
+            enrollmentNo: row.enrollment_no || row.enrollmentNo || '',
+            schoolDept: row.school_dept || row.schoolDept || '',
+            semester: row.semester || '',
+            phone: row.phone || '',
+            email: row.email || '',
+            category: row.category || '',
+            participationType: row.participation_type || row.participationType || 'Solo',
+            participationFormat: row.participation_format || row.participationFormat || (row.participation_type ? row.participation_type.toLowerCase() : 'solo'),
+            teamMembers: parsedMembers,
+            performanceName: row.performance_name || row.performanceName || '',
+            numParticipants: row.num_participants || row.numParticipants || (1 + parsedMembers.length),
+            description: row.description || '',
+            trackUrl: row.track_url || row.trackUrl || '',
+            trackFileName: row.track_file_name || row.trackFileName || '',
+            driveLink: row.drive_link || row.driveLink || '',
+            status: row.status || 'Registered',
+            checkedIn: Boolean(row.checked_in ?? row.checkedIn),
+            checkInTime: row.check_in_time || row.checkInTime || null,
+            slotTime: row.slotTime || "22 Oct 2026 • TBA",
+            registeredAt: row.created_at?.toDate ? row.created_at.toDate().toISOString() : (row.created_at || row.registeredAt || new Date().toISOString())
+          };
+
+          await saveRegistrationToBackend(regPayload);
+          migratedRegistrations++;
+        } catch (itemErr) {
+          errors.push(`Doc ${docSnap.id}: ${itemErr.message}`);
+        }
+      }
+
+      // 2. Check sponsors
+      const spSnapshot = await getDocs(collection(db, 'sponsors'));
+      for (const spDoc of spSnapshot.docs) {
+        try {
+          const spData = spDoc.data();
+          const base = getBackendUrl();
+          await fetch(`${base}/api/sponsors`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: spDoc.id,
+              name: spData.name,
+              tier: spData.tier || spData.category,
+              logoUrl: spData.logoUrl || spData.logo_url,
+              website: spData.websiteUrl || spData.website,
+              status: spData.status || 'Active'
+            })
+          });
+          migratedSponsors++;
+        } catch (spErr) {
+          errors.push(`Sponsor ${spDoc.id}: ${spErr.message}`);
+        }
+      }
+    } catch (err) {
+      console.warn('[Migration] Firebase Firestore query warning:', err.message);
+      errors.push(`Firebase: ${err.message}`);
+    }
+  }
+
+  // 3. Merge any past records stored in browser LocalStorage
+  try {
+    const local = getRegistrations();
+    for (const item of local) {
+      try {
+        await saveRegistrationToBackend(item);
+        migratedRegistrations++;
+      } catch {
+        // Ignored if duplicate or format mismatch
+      }
+    }
+  } catch (err) {
+    console.warn('[Migration] LocalStorage merge warning:', err.message);
+  }
+
+  return { migratedRegistrations, migratedSponsors, errors };
+};
+
+
 
 
 

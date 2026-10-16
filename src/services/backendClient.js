@@ -6,18 +6,17 @@
 const BACKEND_URL_STORAGE_KEY = 'gsfcu_render_backend_url';
 
 export const getBackendUrl = () => {
-  if (typeof window !== 'undefined') {
-    const saved = localStorage.getItem(BACKEND_URL_STORAGE_KEY);
-    if (saved && saved.trim()) {
-      return saved.trim().replace(/\/+$/, '');
-    }
-  }
   const envUrl = import.meta.env.VITE_BACKEND_URL;
   if (envUrl && typeof envUrl === 'string' && envUrl.trim()) {
     return envUrl.trim().replace(/\/+$/, '');
   }
-  // Default to live Render backend
-  return 'https://gsfcugottalent.onrender.com';
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem(BACKEND_URL_STORAGE_KEY);
+    if (saved && saved.trim() && !saved.includes('onrender.com')) {
+      return saved.trim().replace(/\/+$/, '');
+    }
+  }
+  return 'http://54.234.188.13:5000';
 };
 
 export const setBackendUrl = (url) => {

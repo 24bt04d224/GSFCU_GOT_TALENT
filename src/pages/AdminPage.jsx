@@ -29,14 +29,15 @@ import {
   getBrochure,
   fetchBrochureFromCloud,
   uploadBrochurePDF,
-  deleteBrochureRecord
+  deleteBrochureRecord,
+  migrateFirestoreToBackend
 } from '../services/registrationService';
 import GoogleSignInButton from '../components/GoogleSignInButton';
 import {
   Users, CheckCircle2, Award, Download, Search,
   Lock, QrCode, Trash2, Eye, RefreshCw, Music,
   Play, Pause, ExternalLink, MessageSquare, Database, LogOut, Plus, Edit2, X, User, Building2,
-  FileText, Upload, Camera, ShieldCheck
+  FileText, Upload, Camera, ShieldCheck, CloudDownload
 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -118,6 +119,26 @@ export default function AdminPage() {
       const brochData = await fetchBrochureFromCloud();
       setBrochure(brochData);
 
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleMigrateFromFirebase = async () => {
+    if (!window.confirm('Import past registrations and sponsors from Firebase Firestore / LocalStorage into your AWS EC2 backend?')) {
+      return;
+    }
+    setIsSyncing(true);
+    try {
+      const res = await migrateFirestoreToBackend();
+      if (res.migratedRegistrations > 0 || res.migratedSponsors > 0) {
+        alert(`🎉 Success! Migrated ${res.migratedRegistrations} registrations and ${res.migratedSponsors} sponsors directly into your AWS EC2 backend!`);
+        await handleSyncCloud();
+      } else {
+        alert('Notice: No new records found in Firebase/LocalStorage, or all records are already synced.');
+      }
+    } catch (err) {
+      alert(`Migration error: ${err.message}`);
     } finally {
       setIsSyncing(false);
     }
@@ -607,6 +628,16 @@ export default function AdminPage() {
               <RefreshCw className={`w-3.5 h-3.5 text-[#E86F2D] ${isSyncing ? 'animate-spin' : ''}`} />
 
               <span>{isSyncing ? 'Syncing...' : 'Sync Data'}</span>
+            </button>
+
+            <button
+              onClick={handleMigrateFromFirebase}
+              disabled={isSyncing}
+              className="px-3.5 py-2 rounded-md bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 text-xs font-mono text-amber-300 font-bold flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
+              title="Pull past registrations from Firebase Firestore directly into AWS EC2"
+            >
+              <CloudDownload className="w-3.5 h-3.5 text-amber-400" />
+              <span>RECALL PAST DATA</span>
             </button>
 
             <button
