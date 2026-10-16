@@ -37,11 +37,11 @@ import {
   Users, CheckCircle2, Award, Download, Search,
   Lock, QrCode, Trash2, Eye, RefreshCw, Music,
   Play, Pause, ExternalLink, MessageSquare, Database, LogOut, Plus, Edit2, X, User, Building2,
-  FileText, Upload, Camera, ShieldCheck, CloudDownload
+  FileText, Upload, Camera, ShieldCheck, CloudDownload, Key
 } from 'lucide-react';
 
 export default function AdminPage() {
-  const { user, role, loading, logout, canAccessPortal, isAdmin, isCommittee } = useAuth();
+  const { user, role, loading, logout, canAccessPortal, isAdmin, isCommittee, login } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -103,6 +103,26 @@ export default function AdminPage() {
   const [scannerOpen, setScannerOpen] = useState(false);
 
   const [isSyncing, setIsSyncing] = useState(false);
+
+  // Committee Passcode Access State for Restricted View
+  const [showAdminPasscode, setShowAdminPasscode] = useState(false);
+  const [adminPasscode, setAdminPasscode] = useState('');
+  const [adminPasscodeError, setAdminPasscodeError] = useState('');
+  const [adminPasscodeLoading, setAdminPasscodeLoading] = useState(false);
+
+  const handleAdminPasscodeSubmit = async (e) => {
+    e.preventDefault();
+    setAdminPasscodeError('');
+    setAdminPasscodeLoading(true);
+    try {
+      const res = await login({ passcode: adminPasscode });
+      if (!res.success) {
+        setAdminPasscodeError(res.error || 'Invalid passcode.');
+      }
+    } finally {
+      setAdminPasscodeLoading(false);
+    }
+  };
 
   // Sound Engineer In-Dashboard Audio Player
   const [activeTrack, setActiveTrack] = useState(null);
@@ -548,8 +568,55 @@ export default function AdminPage() {
             <GoogleSignInButton
               adminOnly={true}
               buttonText="SIGN IN WITH GOOGLE (ADMIN ACCESS)"
-              className="mb-5"
+              className="mb-4"
             />
+
+            {/* Committee Passcode Alternative */}
+            <div className="pt-4 border-t border-white/10 text-center">
+              {!showAdminPasscode ? (
+                <button
+                  type="button"
+                  onClick={() => setShowAdminPasscode(true)}
+                  className="text-[11px] font-mono text-[#E86F2D] hover:underline transition-colors flex items-center justify-center gap-1.5 mx-auto cursor-pointer"
+                >
+                  <Key className="w-3.5 h-3.5" />
+                  <span>Or Enter Committee Passcode (gsfcu2026)</span>
+                </button>
+              ) : (
+                <form onSubmit={handleAdminPasscodeSubmit} className="space-y-3 animate-in fade-in duration-200">
+                  <p className="text-[10px] font-mono tracking-widest text-[#E86F2D] uppercase">
+                    ENTER ORGANIZER PASSCODE
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="password"
+                      value={adminPasscode}
+                      onChange={(e) => setAdminPasscode(e.target.value)}
+                      placeholder="Passcode (e.g. gsfcu2026)"
+                      className="flex-1 bg-[#000000] border border-[#E86F2D]/40 rounded-lg px-3 py-2 text-xs text-white placeholder-white/30 font-mono focus:outline-none focus:border-[#E86F2D]"
+                      autoFocus
+                    />
+                    <button
+                      type="submit"
+                      disabled={adminPasscodeLoading}
+                      className="bg-[#E86F2D] hover:bg-[#d05e1f] text-white font-mono font-bold text-xs px-4 py-2 rounded-lg cursor-pointer transition-colors"
+                    >
+                      {adminPasscodeLoading ? '...' : 'UNLOCK'}
+                    </button>
+                  </div>
+                  {adminPasscodeError && (
+                    <p className="text-[11px] font-mono text-red-400">{adminPasscodeError}</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowAdminPasscode(false)}
+                    className="text-[10px] text-[#C9C5BD] hover:underline"
+                  >
+                    Cancel
+                  </button>
+                </form>
+              )}
+            </div>
 
 
             <div className="mt-6 pt-4 border-t border-white/5">
@@ -602,7 +669,9 @@ export default function AdminPage() {
                 <Database className="w-3 h-3" />
                 <span>
                   {isBackendConfigured()
-                    ? 'RENDER CLOUD ACTIVE'
+                    ? (getBackendUrl().includes('54.234.188.13') || getBackendUrl().includes('amazonaws.com')
+                        ? 'AWS EC2 BACKEND ACTIVE'
+                        : 'CLOUD BACKEND ACTIVE')
                     : isFirebaseConfigured()
                     ? 'FIRESTORE CLOUD ACTIVE'
                     : isSupabaseConfigured()
